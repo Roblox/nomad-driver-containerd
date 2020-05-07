@@ -1,5 +1,5 @@
 // TODO: update the module path below to match your own repository
-module github.com/shishir-a412ed/nomad-driver-containerd
+module github.com/Roblox/nomad-driver-containerd
 
 go 1.12
 
