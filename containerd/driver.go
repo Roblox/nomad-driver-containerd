@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/containerd/containerd"
 	"github.com/hashicorp/consul-template/signals"
 	"github.com/hashicorp/go-hclog"
 	log "github.com/hashicorp/go-hclog"
@@ -63,7 +64,7 @@ var (
 
 	// taskConfigSpec is the specification of the plugin's configuration for
 	// a task
-	// this is used to validated the configuration specified for the plugin
+	// this is used to validate the configuration specified for the plugin
 	// when a job is submitted.
 	taskConfigSpec = hclspec.NewObject(map[string]*hclspec.Spec{
 		"greeting": hclspec.NewDefault(
@@ -143,6 +144,13 @@ type Driver struct {
 func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 	ctx, cancel := context.WithCancel(context.Background())
 	logger = logger.Named(pluginName)
+
+	client, err := containerd.New("/run/containerd/containerd.sock")
+	if err != nil {
+		logger.Warn(err.Error())
+	}
+
+	defer client.Close()
 
 	return &Driver{
 		eventer:        eventer.NewEventer(ctx, logger),

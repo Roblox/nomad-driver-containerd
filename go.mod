@@ -10,6 +10,7 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/appc/spec v0.8.11 // indirect
 	github.com/checkpoint-restore/go-criu v0.0.0-20191125063657-fcdcd07065c5 // indirect
+	github.com/containerd/containerd v1.3.0
 	github.com/containerd/go-cni v0.0.0-20191121212822-60d125212faf // indirect
 	github.com/containernetworking/plugins v0.8.3 // indirect
 	github.com/coreos/go-iptables v0.4.3 // indirect
@@ -19,6 +20,7 @@ require (
 	github.com/docker/cli v0.0.0-20191202230238-13fb276442f5 // indirect
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
+	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/fsouza/go-dockerclient v1.6.0 // indirect
@@ -53,6 +55,10 @@ replace github.com/shirou/gopsutil => github.com/hashicorp/gopsutil v2.17.13-0.2
 
 // don't use ugorji/go, use the hashicorp fork
 replace github.com/ugorji/go => github.com/hashicorp/go-msgpack v0.0.0-20190927123313-23165f7bc3c2
+
+// Workaround for upstream issue in containerd go mod.
+// https://github.com/containerd/containerd/issues/3031
+replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 
 // fix the version of hashicorp/go-msgpack to 96ddbed8d05b
 replace github.com/hashicorp/go-msgpack => github.com/hashicorp/go-msgpack v0.0.0-20191101193846-96ddbed8d05b
