@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/namespaces"
 	"github.com/hashicorp/consul-template/signals"
 	"github.com/hashicorp/go-hclog"
 	log "github.com/hashicorp/go-hclog"
@@ -138,6 +139,12 @@ type Driver struct {
 
 	// logger will log to the Nomad agent
 	logger log.Logger
+
+	// context for containerd
+	ctxContainerd context.Context
+
+	// containerd client
+	client *containerd.Client
 }
 
 // NewPlugin returns a new containerd driver plugin
@@ -145,18 +152,28 @@ func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 	ctx, cancel := context.WithCancel(context.Background())
 	logger = logger.Named(pluginName)
 
+	// This will create a new containerd client which will talk to
+	// default containerd socket path.
 	client, err := containerd.New("/run/containerd/containerd.sock")
 	if err != nil {
-		logger.Warn(err.Error())
+		logger.Error("Error in creating containerd client", "err", err)
+		return nil
 	}
 
 	defer client.Close()
+
+	// Calls to containerd API are namespaced.
+	// "nomad" is the namespace that will be used for all nomad-driver-containerd
+	// related containerd API calls.
+	ctxContainerd := namespaces.WithNamespace(context.Background(), "nomad")
 
 	return &Driver{
 		eventer:        eventer.NewEventer(ctx, logger),
 		config:         &Config{},
 		tasks:          newTaskStore(),
 		ctx:            ctx,
+		ctxContainerd:  ctxContainerd,
+		client:         client,
 		signalShutdown: cancel,
 		logger:         logger,
 	}
