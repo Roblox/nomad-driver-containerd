@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"time"
 
 	"github.com/containerd/containerd"
@@ -26,7 +24,7 @@ const (
 	// pluginName is the name of the plugin
 	// this is used for logging and (along with the version) for uniquely
 	// identifying plugin binaries fingerprinted by the client
-	pluginName = "containerd-driver"
+	pluginName = "containerd"
 
 	// pluginVersion allows the client to identify and use newer versions of
 	// an installed plugin
@@ -264,37 +262,28 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 		HealthDescription: drivers.DriverHealthy,
 	}
 
-	// Fingerprinting is used by the plugin to relay two important information
-	// to Nomad: health state and node attributes.
-	//
-	// If the plugin reports to be unhealthy, or doesn't send any fingerprint
-	// data in the expected interval of time, Nomad will restart it.
-	//
-	// Node attributes can be used to report any relevant information about
-	// the node in which the plugin is running (specific library availability,
-	// installed versions of a software etc.). These attributes can then be
-	// used by an operator to set job constrains.
-	shell := "bash"
-
-	cmd := exec.Command("which", shell)
-	if err := cmd.Run(); err != nil {
-		return &drivers.Fingerprint{
-			Health:            drivers.HealthStateUndetected,
-			HealthDescription: fmt.Sprintf("shell %s not found", shell),
-		}
+	isRunning, err := isContainerdRunning(d.client)
+	if err != nil {
+		d.logger.Error("Error in buildFingerprint(): failed to get containerd status: %v", err)
+		fp.Health = drivers.HealthStateUndetected
+		fp.HealthDescription = "Undetected"
+		return fp
 	}
 
-	// We also set the shell and its version as attributes
-	cmd = exec.Command(shell, "--version")
-	if out, err := cmd.Output(); err != nil {
-		d.logger.Warn("failed to find shell version: %v", err)
-	} else {
-		re := regexp.MustCompile("[0-9]\\.[0-9]\\.[0-9]")
-		version := re.FindString(string(out))
-
-		fp.Attributes["driver.hello.shell_version"] = structs.NewStringAttribute(version)
-		fp.Attributes["driver.hello.shell"] = structs.NewStringAttribute(shell)
+	if !isRunning {
+		fp.Health = drivers.HealthStateUnhealthy
+		fp.HealthDescription = "Unhealthy"
+		return fp
 	}
+
+	// Get containerd version
+	version, err := getContainerdVersion(d.client)
+	if err != nil {
+		d.logger.Warn("Error in buildFingerprint(): failed to get containerd version: %v", err)
+		return fp
+	}
+
+	fp.Attributes["driver.containerd.containerd_version"] = structs.NewStringAttribute(version)
 
 	return fp
 }
