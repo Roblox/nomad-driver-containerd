@@ -66,10 +66,7 @@ var (
 	// this is used to validate the configuration specified for the plugin
 	// when a job is submitted.
 	taskConfigSpec = hclspec.NewObject(map[string]*hclspec.Spec{
-		"greeting": hclspec.NewDefault(
-			hclspec.NewAttr("greeting", "string", false),
-			hclspec.NewLiteral(`"Hello, World!"`),
-		),
+		"image": hclspec.NewAttr("image", "string", true),
 	})
 
 	// capabilities indicates what optional features this driver supports
@@ -90,7 +87,7 @@ type Config struct {
 // TaskConfig contains configuration information for a task that runs with
 // this plugin
 type TaskConfig struct {
-	Greeting string `codec:"greeting"`
+	Image string `codec:"image"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
@@ -284,7 +281,6 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 	}
 
 	fp.Attributes["driver.containerd.containerd_version"] = structs.NewStringAttribute(version)
-
 	return fp
 }
 
@@ -329,7 +325,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("failed to create executor: %v", err)
 	}
 
-	echoCmd := fmt.Sprintf(`echo "%s"`, driverConfig.Greeting)
+	echoCmd := fmt.Sprintf(`echo "%s"`, driverConfig.Image)
 	execCmd := &executor.ExecCommand{
 		Cmd:        "/bin/bash",
 		Args:       []string{"-c", echoCmd},
