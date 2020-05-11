@@ -284,12 +284,20 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	// https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go
 	containerName := namesgenerator.GetRandomName(1)
 
-	image, err := d.pullOCIImage(driverConfig.Image)
+	image, err := d.pullImage(driverConfig.Image)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error in pulling OCI image: %v", err)
+		return nil, nil, fmt.Errorf("Error in pulling image: %v", err)
 	}
 
 	d.logger.Info("Successfully pulled %s image\n", image.Name())
+
+	containerSnapshotName := fmt.Sprintf("%s-snapshot", containerName)
+	container, err := d.createContainer(image, containerName, containerSnapshotName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
+	}
+
+	d.logger.Info("Successfully created container with name: %s, ID: %s and snapshot with ID: %s", containerName, container.ID(), containerSnapshotName)
 
 	h := &taskHandle{
 		containerName: containerName,
