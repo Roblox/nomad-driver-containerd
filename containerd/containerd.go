@@ -2,6 +2,7 @@ package containerd
 
 import (
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/oci"
 )
 
@@ -24,4 +25,8 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 		containerd.WithNewSnapshot(containerSnapshotName, image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
 	)
+}
+
+func (d *Driver) createTask(container containerd.Container) (containerd.Task, error) {
+	return container.NewTask(d.ctxContainerd, cio.NewCreator(cio.WithStdio))
 }
