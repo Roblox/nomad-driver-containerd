@@ -4,10 +4,10 @@ import (
 	"github.com/containerd/containerd"
 )
 
-func isContainerdRunning(c *containerd.Client) (bool, error) {
-	return true, nil
+func (d *Driver) isContainerdRunning() (bool, error) {
+	return d.client.IsServing(d.ctxContainerd)
 }
 
-func getContainerdVersion(c *containerd.Client) (string, error) {
-	return "1.3.3", nil
+func (d *Driver) getContainerdVersion() (containerd.Version, error) {
+	return d.client.Version(d.ctxContainerd)
 }
