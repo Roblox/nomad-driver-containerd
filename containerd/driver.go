@@ -23,7 +23,7 @@ const (
 	// pluginName is the name of the plugin
 	// this is used for logging and (along with the version) for uniquely
 	// identifying plugin binaries fingerprinted by the client
-	pluginName = "containerd"
+	pluginName = "nomad-driver-containerd"
 
 	// pluginVersion allows the client to identify and use newer versions of
 	// an installed plugin
@@ -73,7 +73,7 @@ var (
 	// https://godoc.org/github.com/hashicorp/nomad/plugins/drivers#Capabilities
 	capabilities = &drivers.Capabilities{
 		SendSignals: true,
-		Exec:        false,
+		Exec:        true,
 		FSIsolation: drivers.FSIsolationNone,
 	}
 )
@@ -184,18 +184,10 @@ func (d *Driver) SetConfig(cfg *base.Config) error {
 	// Save the configuration to the plugin
 	d.config = &config
 
-	// If your driver agent configuration requires any complex validation
-	// (some dependency between attributes) or special data parsing (the
-	// string "10s" into a time.Interval) you can do it here and update the
-	// value in d.config.
-
 	// Save the Nomad agent configuration
 	if cfg.AgentConfig != nil {
 		d.nomadConfig = cfg.AgentConfig.Driver
 	}
-
-	// Here you can use the config values to initialize any resources that are
-	// shared by all tasks that use this driver, such as a daemon process.
 
 	return nil
 }
@@ -291,6 +283,13 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	// Generate a random container name using docker namesgenerator package.
 	// https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go
 	containerName := namesgenerator.GetRandomName(1)
+
+	image, err := d.pullOCIImage(driverConfig.Image)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Error in pulling OCI image: %v", err)
+	}
+
+	d.logger.Info("Successfully pulled %s image\n", image.Name())
 
 	h := &taskHandle{
 		containerName: containerName,
