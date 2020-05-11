@@ -2,13 +2,12 @@ package containerd
 
 import (
 	"context"
-	"strconv"
+	"fmt"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/nomad/drivers/shared/executor"
 	"github.com/hashicorp/nomad/plugins/drivers"
 )
 
@@ -19,17 +18,13 @@ type taskHandle struct {
 	// stateLock syncs access to all fields below
 	stateLock sync.RWMutex
 
-	logger       hclog.Logger
-	exec         executor.Executor
-	pluginClient *plugin.Client
-	taskConfig   *drivers.TaskConfig
-	procState    drivers.TaskState
-	startedAt    time.Time
-	completedAt  time.Time
-	exitResult   *drivers.ExitResult
-
-	// TODO: add any extra relevant information about the task.
-	pid int
+	logger        hclog.Logger
+	taskConfig    *drivers.TaskConfig
+	procState     drivers.TaskState
+	startedAt     time.Time
+	completedAt   time.Time
+	exitResult    *drivers.ExitResult
+	containerName string
 }
 
 func (h *taskHandle) TaskStatus() *drivers.TaskStatus {
@@ -44,7 +39,7 @@ func (h *taskHandle) TaskStatus() *drivers.TaskStatus {
 		CompletedAt: h.completedAt,
 		ExitResult:  h.exitResult,
 		DriverAttributes: map[string]string{
-			"pid": strconv.Itoa(h.pid),
+			"containerName": h.containerName,
 		},
 	}
 }
@@ -63,9 +58,11 @@ func (h *taskHandle) run() {
 	h.stateLock.Unlock()
 
 	// TODO: wait for your task to complete and upate its state.
-	ps, err := h.exec.Wait(context.Background())
+	//ps, err := h.exec.Wait(context.Background())
 	h.stateLock.Lock()
 	defer h.stateLock.Unlock()
+
+	err := fmt.Errorf("Hello test error")
 
 	if err != nil {
 		h.exitResult.Err = err
@@ -74,7 +71,23 @@ func (h *taskHandle) run() {
 		return
 	}
 	h.procState = drivers.TaskStateExited
-	h.exitResult.ExitCode = ps.ExitCode
-	h.exitResult.Signal = ps.Signal
-	h.completedAt = ps.Time
+	//h.exitResult.ExitCode = ps.ExitCode
+	//h.exitResult.Signal = ps.Signal
+	//h.completedAt = ps.Time
+}
+
+func (h *taskHandle) shutdown(timeout time.Duration, signal string) error {
+	return nil
+}
+
+func (h *taskHandle) cleanup() error {
+	return nil
+}
+
+func (h *taskHandle) stats(ctx context.Context, interval time.Duration) (<-chan *drivers.TaskResourceUsage, error) {
+	return nil, nil
+}
+
+func (h *taskHandle) signal(sig os.Signal) error {
+	return nil
 }
