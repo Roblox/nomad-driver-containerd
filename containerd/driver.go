@@ -59,6 +59,7 @@ var (
 			hclspec.NewAttr("enabled", "bool", false),
 			hclspec.NewLiteral("true"),
 		),
+		"containerd_runtime": hclspec.NewAttr("containerd_runtime", "string", true),
 	})
 
 	// taskConfigSpec is the specification of the plugin's configuration for
@@ -81,7 +82,8 @@ var (
 
 // Config contains configuration information for the plugin
 type Config struct {
-	Enabled bool `codec:"enabled"`
+	Enabled           bool   `codec:"enabled"`
+	ContainerdRuntime string `codec:"containerd_runtime"`
 }
 
 // TaskConfig contains configuration information for a task that runs with
@@ -289,9 +291,10 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 
 	d.logger.Info("Successfully pulled %s image\n", image.Name())
+	d.logger.Info("Containerd runtime: %s\n", d.config.ContainerdRuntime)
 
 	containerSnapshotName := fmt.Sprintf("%s-snapshot", containerName)
-	container, err := d.createContainer(image, containerName, containerSnapshotName)
+	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}

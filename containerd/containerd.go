@@ -18,10 +18,11 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
 }
 
-func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName string) (containerd.Container, error) {
+func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime string) (containerd.Container, error) {
 	return d.client.NewContainer(
 		d.ctxContainerd,
 		containerName,
+		containerd.WithRuntime(containerdRuntime, nil),
 		containerd.WithNewSnapshot(containerSnapshotName, image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
 	)
