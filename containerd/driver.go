@@ -290,8 +290,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("Error in pulling image: %v", err)
 	}
 
-	d.logger.Info("Successfully pulled %s image\n", image.Name())
-	d.logger.Info("Containerd runtime: %s\n", d.config.ContainerdRuntime)
+	d.logger.Info(fmt.Sprintf("Successfully pulled %s image\n", image.Name()))
 
 	containerSnapshotName := fmt.Sprintf("%s-snapshot", containerName)
 	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime)
@@ -299,14 +298,14 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
 
-	d.logger.Info("Successfully created container with name: %s, ID: %s and snapshot with ID: %s", containerName, container.ID(), containerSnapshotName)
+	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s, ID: %s and snapshot with ID: %s", containerName, container.ID(), containerSnapshotName))
 
 	task, err := d.createTask(container)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating task: %v", err)
 	}
 
-	d.logger.Info("Task with %s ID created successfully.", task.ID())
+	d.logger.Info(fmt.Sprintf("Task with %s ID created successfully.", task.ID()))
 
 	h := &taskHandle{
 		containerName: containerName,
