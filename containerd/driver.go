@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"syscall"
 	"time"
 
 	"github.com/containerd/containerd"
@@ -312,6 +313,8 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		procState:     drivers.TaskStateRunning,
 		startedAt:     time.Now().Round(time.Millisecond),
 		logger:        d.logger,
+		container:     container,
+		task:          task,
 	}
 
 	driverState := TaskState{
@@ -324,7 +327,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 
 	d.tasks.Set(cfg.ID, h)
-	go h.run()
+	go h.run(d.ctxContainerd)
 	return handle, nil, nil
 }
 
@@ -359,7 +362,7 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 
 	d.tasks.Set(handle.Config.ID, h)
 
-	go h.run()
+	go h.run(d.ctxContainerd)
 	return nil
 }
 
@@ -379,6 +382,23 @@ func (d *Driver) handleWait(ctx context.Context, handle *taskHandle, ch chan *dr
 	defer close(ch)
 	var result *drivers.ExitResult
 
+	exitStatusCh, err := handle.task.Wait(d.ctxContainerd)
+	if err != nil {
+		result = &drivers.ExitResult{
+			Err: fmt.Errorf("executor: error waiting on process: %v", err),
+		}
+	} else {
+		status := <-exitStatusCh
+		code, _, err := status.Result()
+		if err != nil {
+			d.logger.Error(err.Error())
+			return
+		}
+		result = &drivers.ExitResult{
+			ExitCode: int(code),
+		}
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -397,7 +417,10 @@ func (d *Driver) StopTask(taskID string, timeout time.Duration, signal string) e
 		return drivers.ErrTaskNotFound
 	}
 
-	if err := handle.shutdown(timeout, signal); err != nil {
+	d.logger.Info("StopTask signal: %s", signal)
+	d.logger.Info("StopTask timeout: %v", timeout)
+
+	if err := handle.shutdown(d.ctxContainerd, syscall.SIGTERM); err != nil {
 		return fmt.Errorf("Shutdown failed: %v", err)
 	}
 
@@ -415,7 +438,7 @@ func (d *Driver) DestroyTask(taskID string, force bool) error {
 		return fmt.Errorf("cannot destroy running task")
 	}
 
-	if err := handle.cleanup(); err != nil {
+	if err := handle.cleanup(d.ctxContainerd); err != nil {
 		return err
 	}
 

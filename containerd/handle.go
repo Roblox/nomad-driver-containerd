@@ -2,11 +2,12 @@ package containerd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
+	"syscall"
 	"time"
 
+	"github.com/containerd/containerd"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/nomad/plugins/drivers"
 )
@@ -25,6 +26,8 @@ type taskHandle struct {
 	completedAt   time.Time
 	exitResult    *drivers.ExitResult
 	containerName string
+	container     containerd.Container
+	task          containerd.Task
 }
 
 func (h *taskHandle) TaskStatus() *drivers.TaskStatus {
@@ -50,37 +53,27 @@ func (h *taskHandle) IsRunning() bool {
 	return h.procState == drivers.TaskStateRunning
 }
 
-func (h *taskHandle) run() {
-	h.stateLock.Lock()
-	if h.exitResult == nil {
-		h.exitResult = &drivers.ExitResult{}
-	}
-	h.stateLock.Unlock()
-
-	// TODO: wait for your task to complete and upate its state.
-	//ps, err := h.exec.Wait(context.Background())
+func (h *taskHandle) run(ctxContainerd context.Context) {
 	h.stateLock.Lock()
 	defer h.stateLock.Unlock()
 
-	err := fmt.Errorf("Hello test error")
+	// Sleep for 5 seconds to allow h.task.Wait() to kick in.
+	time.Sleep(5 * time.Second)
 
-	if err != nil {
-		h.exitResult.Err = err
-		h.procState = drivers.TaskStateUnknown
-		h.completedAt = time.Now()
-		return
+	h.task.Start(ctxContainerd)
+}
+
+func (h *taskHandle) shutdown(ctxContainerd context.Context, signal syscall.Signal) error {
+	return h.task.Kill(ctxContainerd, signal)
+}
+
+func (h *taskHandle) cleanup(ctxContainerd context.Context) error {
+	if err := h.container.Delete(ctxContainerd, containerd.WithSnapshotCleanup); err != nil {
+		return err
 	}
-	h.procState = drivers.TaskStateExited
-	//h.exitResult.ExitCode = ps.ExitCode
-	//h.exitResult.Signal = ps.Signal
-	//h.completedAt = ps.Time
-}
-
-func (h *taskHandle) shutdown(timeout time.Duration, signal string) error {
-	return nil
-}
-
-func (h *taskHandle) cleanup() error {
+	if _, err := h.task.Delete(ctxContainerd); err != nil {
+		return err
+	}
 	return nil
 }
 
