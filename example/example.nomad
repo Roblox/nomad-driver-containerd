@@ -1,13 +1,20 @@
 job "example" {
   datacenters = ["dc1"]
-  type        = "batch"
 
-  group "example" {
-    task "hello-world" {
-      driver = "hello-world-example"
+  group "cache" {
+    task "redis" {
+      driver = "containerd-driver"
 
       config {
-        greeting = "hello"
+        image = "docker.io/library/redis:alpine"
+      }
+
+      resources {
+        cpu    = 500
+        memory = 256
+        network {
+          mbits = 10
+        }
       }
     }
   }

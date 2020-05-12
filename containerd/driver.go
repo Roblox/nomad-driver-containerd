@@ -24,7 +24,7 @@ const (
 	// pluginName is the name of the plugin
 	// this is used for logging and (along with the version) for uniquely
 	// identifying plugin binaries fingerprinted by the client
-	pluginName = "nomad-driver-containerd"
+	pluginName = "containerd-driver"
 
 	// pluginVersion allows the client to identify and use newer versions of
 	// an installed plugin
@@ -143,8 +143,6 @@ func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 		logger.Error("Error in creating containerd client", "err", err)
 		return nil
 	}
-
-	defer client.Close()
 
 	// Calls to containerd API are namespaced.
 	// "nomad" is the namespace that will be used for all nomad-driver-containerd

@@ -1,7 +1,7 @@
-log_level = "TRACE"
+log_level = "INFO"
 
-plugin "hello-driver" {
+plugin "containerd-driver" {
   config {
-    shell = "bash"
+    enabled = true
   }
 }
