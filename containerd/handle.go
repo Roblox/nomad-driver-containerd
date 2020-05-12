@@ -68,10 +68,10 @@ func (h *taskHandle) shutdown(ctxContainerd context.Context, signal syscall.Sign
 }
 
 func (h *taskHandle) cleanup(ctxContainerd context.Context) error {
-	if err := h.container.Delete(ctxContainerd, containerd.WithSnapshotCleanup); err != nil {
+	if _, err := h.task.Delete(ctxContainerd); err != nil {
 		return err
 	}
-	if _, err := h.task.Delete(ctxContainerd); err != nil {
+	if err := h.container.Delete(ctxContainerd, containerd.WithSnapshotCleanup); err != nil {
 		return err
 	}
 	return nil
