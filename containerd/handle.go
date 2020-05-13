@@ -2,6 +2,7 @@ package containerd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"syscall"
@@ -63,8 +64,29 @@ func (h *taskHandle) run(ctxContainerd context.Context) {
 	h.task.Start(ctxContainerd)
 }
 
-func (h *taskHandle) shutdown(ctxContainerd context.Context, signal syscall.Signal) error {
-	return h.task.Kill(ctxContainerd, signal)
+func (h *taskHandle) shutdown(ctxContainerd context.Context, timeout time.Duration, signal syscall.Signal) error {
+	if err := h.task.Kill(ctxContainerd, signal); err != nil {
+		return err
+	}
+
+	// timeout = 5 seconds, passed by nomad client
+	// TODO: Make timeout configurable in task_config. This will allow users to set a higher timeout
+	// if they need more time for their container to shutdown gracefully.
+	time.Sleep(timeout)
+
+	status, err := h.task.Status(ctxContainerd)
+	if err != nil {
+		return err
+	}
+
+	h.logger.Info(fmt.Sprintf("Status is: %v\n", status.Status))
+
+	if status.Status != containerd.Running {
+		h.logger.Info("Task is not running anymore, no need to SIGKILL")
+		return nil
+	}
+
+	return h.task.Kill(ctxContainerd, syscall.SIGKILL)
 }
 
 func (h *taskHandle) cleanup(ctxContainerd context.Context) error {

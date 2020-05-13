@@ -417,10 +417,7 @@ func (d *Driver) StopTask(taskID string, timeout time.Duration, signal string) e
 		return drivers.ErrTaskNotFound
 	}
 
-	d.logger.Info("StopTask signal: %s", signal)
-	d.logger.Info("StopTask timeout: %v", timeout)
-
-	if err := handle.shutdown(d.ctxContainerd, syscall.SIGTERM); err != nil {
+	if err := handle.shutdown(d.ctxContainerd, timeout, syscall.SIGTERM); err != nil {
 		return fmt.Errorf("Shutdown failed: %v", err)
 	}
 
