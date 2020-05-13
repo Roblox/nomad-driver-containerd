@@ -479,9 +479,9 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 		return drivers.ErrTaskNotFound
 	}
 
-	// The given signal must be forwarded to the target taskID. If this plugin
-	// doesn't support receiving signals (capability SendSignals is set to
-	// false) you can just return nil.
+	// The given signal will be forwarded to the target taskID.
+	// Please checkout https://github.com/hashicorp/consul-template/blob/master/signals/signals_unix.go
+	// for a list of supported signals.
 	sig := os.Interrupt
 	if s, ok := signals.SignalLookup[signal]; ok {
 		sig = s
@@ -489,7 +489,7 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 		d.logger.Warn("unknown signal to send to task, using SIGINT instead", "signal", signal, "task_id", handle.taskConfig.ID)
 
 	}
-	return handle.signal(sig)
+	return handle.signal(d.ctxContainerd, sig)
 }
 
 // ExecTask returns the result of executing the given command inside a task.

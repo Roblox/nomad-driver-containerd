@@ -81,6 +81,6 @@ func (h *taskHandle) stats(ctx context.Context, interval time.Duration) (<-chan 
 	return nil, nil
 }
 
-func (h *taskHandle) signal(sig os.Signal) error {
-	return nil
+func (h *taskHandle) signal(ctxContainerd context.Context, sig os.Signal) error {
+	return h.task.Kill(ctxContainerd, sig.(syscall.Signal))
 }
