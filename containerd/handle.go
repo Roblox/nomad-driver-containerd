@@ -2,7 +2,6 @@ package containerd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 	"syscall"
