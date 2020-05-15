@@ -79,8 +79,6 @@ func (h *taskHandle) shutdown(ctxContainerd context.Context, timeout time.Durati
 		return err
 	}
 
-	h.logger.Info(fmt.Sprintf("Status is: %v\n", status.Status))
-
 	if status.Status != containerd.Running {
 		h.logger.Info("Task is not running anymore, no need to SIGKILL")
 		return nil
