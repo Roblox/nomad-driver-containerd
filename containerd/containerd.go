@@ -28,6 +28,14 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	)
 }
 
+func (d *Driver) loadContainer(id string) (containerd.Container, error) {
+	return d.client.LoadContainer(d.ctxContainerd, id)
+}
+
 func (d *Driver) createTask(container containerd.Container) (containerd.Task, error) {
 	return container.NewTask(d.ctxContainerd, cio.NewCreator(cio.WithStdio))
+}
+
+func (d *Driver) getTask(container containerd.Container) (containerd.Task, error) {
+	return container.Task(d.ctxContainerd, cio.Load)
 }

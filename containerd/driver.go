@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"syscall"
 	"time"
 
@@ -99,9 +98,7 @@ type TaskConfig struct {
 // recovery.
 type TaskState struct {
 	StartedAt     time.Time
-	Container     containerd.Container
 	ContainerName string
-	Task          containerd.Task
 }
 
 type Driver struct {
@@ -301,14 +298,14 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
 
-	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s, ID: %s and snapshot with ID: %s", containerName, container.ID(), containerSnapshotName))
+	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s", containerName))
 
 	task, err := d.createTask(container)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating task: %v", err)
 	}
 
-	d.logger.Info(fmt.Sprintf("Task with %s ID created successfully.", task.ID()))
+	d.logger.Info(fmt.Sprintf("Successfully created task with ID: %s", task.ID()))
 
 	h := &taskHandle{
 		taskConfig:    cfg,
@@ -322,9 +319,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 
 	driverState := TaskState{
 		StartedAt:     h.startedAt,
-		Container:     container,
 		ContainerName: containerName,
-		Task:          task,
 	}
 
 	if err := handle.SetDriverState(&driverState); err != nil {
@@ -356,32 +351,19 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		return fmt.Errorf("failed to decode driver config: %v", err)
 	}
 
-	image, err := d.pullImage(driverConfig.Image)
+	container, err := d.loadContainer(taskState.ContainerName)
 	if err != nil {
-		return fmt.Errorf("Error in recovering image: %v", err)
+		return fmt.Errorf("Error in recovering container: %v", err)
 	}
 
-	var container containerd.Container
-
-	containerSnapshotName := fmt.Sprintf("%s-snapshot", taskState.ContainerName)
-	container, err = d.createContainer(image, taskState.ContainerName, containerSnapshotName, d.config.ContainerdRuntime)
+	task, err := d.getTask(container)
 	if err != nil {
-		if !strings.Contains(err.Error(), "already exists") {
-			return fmt.Errorf("Error in recovering container: %v", err)
-		}
-		container = taskState.Container
+		return fmt.Errorf("Error in recovering task: %v", err)
 	}
 
-	status, err := taskState.Task.Status(d.ctxContainerd)
+	status, err := task.Status(d.ctxContainerd)
 	if err != nil {
-		return err
-	}
-
-	if status.Status != containerd.Running {
-		taskState.Task, err = d.createTask(container)
-		if err != nil {
-			return fmt.Errorf("Error in recovering task: %v", err)
-		}
+		return fmt.Errorf("Error in recovering task status: %v", err)
 	}
 
 	h := &taskHandle{
@@ -390,15 +372,18 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		startedAt:     taskState.StartedAt,
 		exitResult:    &drivers.ExitResult{},
 		logger:        d.logger,
-		container:     taskState.Container,
+		container:     container,
 		containerName: taskState.ContainerName,
-		task:          taskState.Task,
+		task:          task,
 	}
 
 	d.tasks.Set(handle.Config.ID, h)
-	if status.Status != containerd.Running {
+
+	if status.Status == containerd.Stopped {
 		go h.run(d.ctxContainerd)
 	}
+
+	d.logger.Info(fmt.Sprintf("Task with ID: %s recovered successfully.", handle.Config.ID))
 	return nil
 }
 
