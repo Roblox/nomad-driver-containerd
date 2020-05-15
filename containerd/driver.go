@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"syscall"
 	"time"
 
@@ -98,7 +99,9 @@ type TaskConfig struct {
 // recovery.
 type TaskState struct {
 	StartedAt     time.Time
+	Container     containerd.Container
 	ContainerName string
+	Task          containerd.Task
 }
 
 type Driver struct {
@@ -308,18 +311,20 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	d.logger.Info(fmt.Sprintf("Task with %s ID created successfully.", task.ID()))
 
 	h := &taskHandle{
-		containerName: containerName,
 		taskConfig:    cfg,
 		procState:     drivers.TaskStateRunning,
 		startedAt:     time.Now().Round(time.Millisecond),
 		logger:        d.logger,
 		container:     container,
+		containerName: containerName,
 		task:          task,
 	}
 
 	driverState := TaskState{
 		StartedAt:     h.startedAt,
+		Container:     container,
 		ContainerName: containerName,
+		Task:          task,
 	}
 
 	if err := handle.SetDriverState(&driverState); err != nil {
@@ -351,18 +356,49 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		return fmt.Errorf("failed to decode driver config: %v", err)
 	}
 
+	image, err := d.pullImage(driverConfig.Image)
+	if err != nil {
+		return fmt.Errorf("Error in recovering image: %v", err)
+	}
+
+	var container containerd.Container
+
+	containerSnapshotName := fmt.Sprintf("%s-snapshot", taskState.ContainerName)
+	container, err = d.createContainer(image, taskState.ContainerName, containerSnapshotName, d.config.ContainerdRuntime)
+	if err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
+			return fmt.Errorf("Error in recovering container: %v", err)
+		}
+		container = taskState.Container
+	}
+
+	status, err := taskState.Task.Status(d.ctxContainerd)
+	if err != nil {
+		return err
+	}
+
+	if status.Status != containerd.Running {
+		taskState.Task, err = d.createTask(container)
+		if err != nil {
+			return fmt.Errorf("Error in recovering task: %v", err)
+		}
+	}
+
 	h := &taskHandle{
 		taskConfig:    handle.Config,
 		procState:     drivers.TaskStateRunning,
 		startedAt:     taskState.StartedAt,
 		exitResult:    &drivers.ExitResult{},
 		logger:        d.logger,
+		container:     taskState.Container,
 		containerName: taskState.ContainerName,
+		task:          taskState.Task,
 	}
 
 	d.tasks.Set(handle.Config.ID, h)
-
-	go h.run(d.ctxContainerd)
+	if status.Status != containerd.Running {
+		go h.run(d.ctxContainerd)
+	}
 	return nil
 }
 
