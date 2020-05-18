@@ -2,6 +2,7 @@ package containerd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"syscall"
@@ -30,9 +31,18 @@ type taskHandle struct {
 	task          containerd.Task
 }
 
-func (h *taskHandle) TaskStatus() *drivers.TaskStatus {
+func (h *taskHandle) TaskStatus(ctxContainerd context.Context) *drivers.TaskStatus {
 	h.stateLock.RLock()
 	defer h.stateLock.RUnlock()
+
+	h.procState = drivers.TaskStateExited
+
+	isRunning, err := h.IsRunning(ctxContainerd)
+	if err != nil {
+		h.procState = drivers.TaskStateUnknown
+	} else if isRunning {
+		h.procState = drivers.TaskStateRunning
+	}
 
 	return &drivers.TaskStatus{
 		ID:          h.taskConfig.ID,
@@ -47,10 +57,16 @@ func (h *taskHandle) TaskStatus() *drivers.TaskStatus {
 	}
 }
 
-func (h *taskHandle) IsRunning() bool {
+func (h *taskHandle) IsRunning(ctxContainerd context.Context) (bool, error) {
 	h.stateLock.RLock()
 	defer h.stateLock.RUnlock()
-	return h.procState == drivers.TaskStateRunning
+
+	status, err := h.task.Status(ctxContainerd)
+	if err != nil {
+		return false, fmt.Errorf("Error in getting task status: %v", err)
+	}
+
+	return (status.Status == containerd.Running), nil
 }
 
 func (h *taskHandle) run(ctxContainerd context.Context) {
@@ -58,6 +74,7 @@ func (h *taskHandle) run(ctxContainerd context.Context) {
 	defer h.stateLock.Unlock()
 
 	// Sleep for 5 seconds to allow h.task.Wait() to kick in.
+	// TODO: Use goroutine and a channel to synchronize this, instead of sleep.
 	time.Sleep(5 * time.Second)
 
 	h.task.Start(ctxContainerd)

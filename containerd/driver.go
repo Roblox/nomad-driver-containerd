@@ -452,7 +452,12 @@ func (d *Driver) DestroyTask(taskID string, force bool) error {
 		return drivers.ErrTaskNotFound
 	}
 
-	if handle.IsRunning() && !force {
+	isRunning, err := handle.IsRunning(d.ctxContainerd)
+	if err != nil {
+		return err
+	}
+
+	if isRunning && !force {
 		return fmt.Errorf("cannot destroy running task")
 	}
 
@@ -471,7 +476,7 @@ func (d *Driver) InspectTask(taskID string) (*drivers.TaskStatus, error) {
 		return nil, drivers.ErrTaskNotFound
 	}
 
-	return handle.TaskStatus(), nil
+	return handle.TaskStatus(d.ctxContainerd), nil
 }
 
 // TaskStats returns a channel which the driver should send stats to at the given interval.
