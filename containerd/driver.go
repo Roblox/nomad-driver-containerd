@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/hashicorp/consul-template/signals"
 	"github.com/hashicorp/go-hclog"
@@ -513,6 +514,71 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 
 	}
 	return handle.signal(d.ctxContainerd, sig)
+}
+
+func (d *Driver) ExecTaskStreaming(ctx context.Context, taskID string, opts *drivers.ExecOptions) (*drivers.ExitResult, error) {
+	d.logger.Info("HELLO: ExecTaskStreaming")
+	handle, ok := d.tasks.Get(taskID)
+	if !ok {
+		return nil, drivers.ErrTaskNotFound
+	}
+
+	spec, err := handle.container.Spec(d.ctxContainerd)
+	if err != nil {
+		return nil, err
+	}
+
+	d.logger.Info("HELLO: STEP 1")
+
+	pspec := spec.Process
+	pspec.Terminal = opts.Tty
+	pspec.Args = opts.Command
+	execID := taskID + "_exec"
+
+	cioOpts := []cio.Opt{cio.WithStreams(opts.Stdin, opts.Stdout, opts.Stderr)}
+	if opts.Tty {
+		cioOpts = append(cioOpts, cio.WithTerminal)
+	}
+	ioCreator := cio.NewCreator(cioOpts...)
+
+	d.logger.Info("HELLO: STEP 2")
+
+	process, err := handle.task.Exec(d.ctxContainerd, execID, pspec, ioCreator)
+	if err != nil {
+		return nil, err
+	}
+
+	defer process.Delete(d.ctxContainerd)
+
+	d.logger.Info("HELLO: STEP 3")
+
+	statusC, err := process.Wait(d.ctxContainerd)
+	if err != nil {
+		return nil, err
+	}
+
+	d.logger.Info("HELLO: STEP 4")
+
+	if err := process.Start(d.ctxContainerd); err != nil {
+		return nil, err
+	}
+
+	d.logger.Info("HELLO: STEP 5")
+
+	status := <-statusC
+	code, _, err := status.Result()
+	if err != nil {
+		return nil, err
+	}
+
+	d.logger.Info("HELLO: STEP 6")
+
+	if code != 0 {
+		return nil, fmt.Errorf("Error in exec: %d\n", int(code))
+	}
+
+	d.logger.Info("HELLO: EXEC finished successfully.")
+	return nil, nil
 }
 
 // ExecTask returns the result of executing the given command inside a task.
