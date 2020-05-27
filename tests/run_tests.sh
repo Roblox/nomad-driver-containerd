@@ -30,15 +30,15 @@ main() {
 	done
 	cd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 	echo "Starting nomad redis job using nomad-driver-containerd."
-	nomad job run example.nomad
+	nomad job run redis.nomad
 	echo "Starting nomad signal handler job using nomad-driver-containerd."
 	nomad job run signal.nomad
 	echo "Inspecting redis job."
-	nomad job inspect example
+	nomad job inspect redis
 	echo "Inspecting signal handler job."
 	nomad job inspect signal
 	echo "Stopping nomad redis job."
-	nomad job stop example
+	nomad job stop redis
 	echo "Stopping nomad signal handler job."
 	nomad job stop signal
 	echo "Sleep for 5 seconds, to allow nomad jobs to shutdown gracefully."
