@@ -3,7 +3,6 @@
 set -euo pipefail
 
 export NOMAD_VERSION=0.11.2
-export CONTAINERD_VERSION=1.3.3
 export PATH=$PATH:/usr/local/go/bin
 export GOPATH=/home/circleci/go
 export GO_VERSION=1.14.3
@@ -15,19 +14,34 @@ main() {
 	echo "Starting setup."
 	setup
 	echo "Setup finished successfully."
-	sleep 10s
+	echo "Checking if nomad-driver-containerd is up and running, and nomad is ready to accept jobs."
+	while true
+	do
+		set +e
+		status=$(curl -s http://127.0.0.1:4646/v1/nodes|jq '.[0] ."Drivers" ."containerd-driver" ."Healthy"')
+		rc=$?
+		set -e
+		if [[ $rc -eq 0 && $status = "true" ]]; then
+			echo "nomad is up and running"
+			break
+		fi
+		echo "nomad is down, wait for 5 seconds."
+		sleep 5s
+	done
 	cd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 	echo "Starting nomad redis job using nomad-driver-containerd."
 	nomad job run example.nomad
 	echo "Starting nomad signal handler job using nomad-driver-containerd."
 	nomad job run signal.nomad
-	echo "Sleep for 5 seconds, to allow nomad jobs to transition into running state."
-	sleep 5s
+	echo "Inspecting redis job."
+	nomad job inspect example
+	echo "Inspecting signal handler job."
+	nomad job inspect signal
 	echo "Stopping nomad redis job."
 	nomad job stop example
 	echo "Stopping nomad signal handler job."
 	nomad job stop signal
-	echo "Sleep for 5 seconds, to allow nomad jobs to shutdown completely."
+	echo "Sleep for 5 seconds, to allow nomad jobs to shutdown gracefully."
 	sleep 5s
 	echo "Tests finished successfully."
 }
@@ -49,7 +63,7 @@ setup() {
 	sudo rm -rf /usr/local/go
 
 	# Change $(pwd) to /tmp
-	cd /tmp 
+	cd /tmp
 
 	# Install golang 1.14.3
 	curl -L -o go${GO_VERSION}.linux-amd64.tar.gz https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz
@@ -74,7 +88,7 @@ setup() {
 	cat << EOF > nomad.service
 # /lib/systemd/system/nomad.service
 [Unit]
-Description=nomad server + nomad-driver-containerd
+Description=nomad server (dev) + nomad-driver-containerd
 Documentation=https://nomadproject.io
 After=network.target
 
@@ -97,7 +111,7 @@ EOF
 	while true
 	do
 		if (systemctl -q is-active "nomad.service"); then
-			echo "nomad is up and running"
+			echo "systemd nomad.service is up and running"
 			break
 		fi
 	done
