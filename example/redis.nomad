@@ -1,8 +1,8 @@
-job "example" {
+job "redis" {
   datacenters = ["dc1"]
 
-  group "cache" {
-    task "redis" {
+  group "redis-group" {
+    task "redis-task" {
       driver = "containerd-driver"
 
       config {

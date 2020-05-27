@@ -1,12 +1,18 @@
-PLUGIN_BINARY=containerd-driver
+BINARY ?= containerd-driver
+GOLANG ?= /usr/local/go/bin/go
+
 export GO111MODULE=on
 
 default: build
 
 .PHONY: clean
-clean: ## Remove build artifacts
-	rm -rf ${PLUGIN_BINARY}
+clean:
+	rm -f $(BINARY)
 
 .PHONY: build
 build:
-	go build -o ${PLUGIN_BINARY} .
+	$(GOLANG) build -o $(BINARY) .
+
+.PHONY: test
+test:
+	./tests/run_tests.sh
