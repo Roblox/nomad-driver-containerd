@@ -33,16 +33,44 @@ main() {
 	nomad job run redis.nomad
 	echo "Starting nomad signal handler job using nomad-driver-containerd."
 	nomad job run signal.nomad
+	echo "Checking status of redis job."
+	redis_status=$(nomad job status -short redis|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
+	if [ $redis_status != "running" ];then
+		echo "Error in getting redis job status."
+		exit 1
+	fi
+	echo "Checking status of signal handler job."
+	signal_status=$(nomad job status -short signal|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
+        if [ $signal_status != "running" ];then
+		echo "Error in getting signal handler job status."
+		exit 1
+	fi
 	echo "Inspecting redis job."
-	nomad job inspect redis
+	redis_status=$(nomad job inspect redis|jq -r '.Job .Status')
+	if [ $redis_status != "running" ];then
+		echo "Error in inspecting redis job."
+		exit 1
+	fi
 	echo "Inspecting signal handler job."
-	nomad job inspect signal
+	signal_status=$(nomad job inspect signal|jq -r '.Job .Status')
+	if [ $signal_status != "running" ]; then
+		echo "Error in inspecting signal handler job."
+		exit 1
+	fi
 	echo "Stopping nomad redis job."
 	nomad job stop redis
+	redis_status=$(nomad job status -short redis|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
+	if [ $redis_status != "dead(stopped)" ];then
+		echo "Error in stopping redis job."
+		exit 1
+	fi
 	echo "Stopping nomad signal handler job."
 	nomad job stop signal
-	echo "Sleep for 5 seconds, to allow nomad jobs to shutdown gracefully."
-	sleep 5s
+	signal_status=$(nomad job status -short signal|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
+        if [ $signal_status != "dead(stopped)" ];then
+                echo "Error in stopping signal handler job."
+                exit 1
+        fi
 	echo "Tests finished successfully."
 }
 
