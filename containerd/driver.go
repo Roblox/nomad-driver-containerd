@@ -516,24 +516,24 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 	return handle.signal(d.ctxContainerd, sig)
 }
 
-func (d *Driver) ExecTaskStreamingRaw(ctx context.Context, taskID string, command []string, tty bool, stream drivers.ExecTaskStream) error {
+func (d *Driver) ExecTaskStreaming(ctx context.Context, taskID string, opts *drivers.ExecOptions) (*drivers.ExitResult, error) {
+	defer opts.Stdout.Close()
+	defer opts.Stderr.Close()
+
 	handle, ok := d.tasks.Get(taskID)
 	if !ok {
-		return drivers.ErrTaskNotFound
+		return nil, drivers.ErrTaskNotFound
 	}
 
 	spec, err := handle.container.Spec(d.ctxContainerd)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	pspec := spec.Process
-	pspec.Terminal = tty
-	pspec.Args = command
+	pspec.Terminal = opts.Tty
+	pspec.Args = opts.Command
 	execID := getRandomID(8)
-
-	opts, doneCh := drivers.StreamToExecOptions(
-		ctx, command, tty, stream)
 
 	cioOpts := []cio.Opt{cio.WithStreams(opts.Stdin, opts.Stdout, opts.Stderr)}
 	if opts.Tty {
@@ -543,44 +543,40 @@ func (d *Driver) ExecTaskStreamingRaw(ctx context.Context, taskID string, comman
 
 	process, err := handle.task.Exec(d.ctxContainerd, execID, pspec, ioCreator)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer process.Delete(d.ctxContainerd)
 
 	statusC, err := process.Wait(d.ctxContainerd)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := process.Start(d.ctxContainerd); err != nil {
-		return err
+		return nil, err
 	}
 
+	var code uint32
 	status := <-statusC
-	code, _, err := status.Result()
+	code, _, err = status.Result()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if code != 0 {
-		return fmt.Errorf("Error in exec: %d\n", int(code))
-	}
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 
-	opts.Stdout.Close()
-	opts.Stderr.Close()
+	return &drivers.ExitResult{
+		ExitCode: int(code),
+	}, nil
 
-	select {
-	case err = <-doneCh:
-	case <-ctx.Done():
-		err = fmt.Errorf("exec task timed out: %v", ctx.Err())
-	}
-	if err != nil {
-		return err
-	}
-
-	d.logger.Info("exec task finished successfully.")
-	return nil
 }
 
 // ExecTask returns the result of executing the given command inside a task.
