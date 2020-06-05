@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"syscall"
 	"time"
 
@@ -516,24 +517,25 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 	return handle.signal(d.ctxContainerd, sig)
 }
 
-func (d *Driver) ExecTaskStreaming(ctx context.Context, taskID string, opts *drivers.ExecOptions) (*drivers.ExitResult, error) {
-	d.logger.Info("HELLO: ExecTaskStreaming")
+func (d *Driver) ExecTaskStreamingRaw(ctx context.Context, taskID string, command []string, tty bool, stream drivers.ExecTaskStream) error {
 	handle, ok := d.tasks.Get(taskID)
 	if !ok {
-		return nil, drivers.ErrTaskNotFound
+		return drivers.ErrTaskNotFound
 	}
 
 	spec, err := handle.container.Spec(d.ctxContainerd)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	d.logger.Info("HELLO: STEP 1")
-
 	pspec := spec.Process
-	pspec.Terminal = opts.Tty
-	pspec.Args = opts.Command
-	execID := taskID + "_exec"
+	pspec.Terminal = tty
+	pspec.Args = command
+	s := strings.Split(taskID, "/")
+	execID := s[len(s)-1] + "-exec"
+
+	opts, doneCh := drivers.StreamToExecOptions(
+		ctx, command, tty, stream)
 
 	cioOpts := []cio.Opt{cio.WithStreams(opts.Stdin, opts.Stdout, opts.Stderr)}
 	if opts.Tty {
@@ -541,44 +543,46 @@ func (d *Driver) ExecTaskStreaming(ctx context.Context, taskID string, opts *dri
 	}
 	ioCreator := cio.NewCreator(cioOpts...)
 
-	d.logger.Info("HELLO: STEP 2")
-
 	process, err := handle.task.Exec(d.ctxContainerd, execID, pspec, ioCreator)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer process.Delete(d.ctxContainerd)
 
-	d.logger.Info("HELLO: STEP 3")
-
 	statusC, err := process.Wait(d.ctxContainerd)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	d.logger.Info("HELLO: STEP 4")
 
 	if err := process.Start(d.ctxContainerd); err != nil {
-		return nil, err
+		return err
 	}
-
-	d.logger.Info("HELLO: STEP 5")
 
 	status := <-statusC
 	code, _, err := status.Result()
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	d.logger.Info("HELLO: STEP 6")
 
 	if code != 0 {
-		return nil, fmt.Errorf("Error in exec: %d\n", int(code))
+		return fmt.Errorf("Error in exec: %d\n", int(code))
 	}
 
-	d.logger.Info("HELLO: EXEC finished successfully.")
-	return nil, nil
+	opts.Stdout.Close()
+	opts.Stderr.Close()
+
+	select {
+	case err = <-doneCh:
+	case <-ctx.Done():
+		err = fmt.Errorf("exec task timed out: %v", ctx.Err())
+	}
+	if err != nil {
+		return err
+	}
+
+	d.logger.Info("exec task finished successfully.")
+	return nil
 }
 
 // ExecTask returns the result of executing the given command inside a task.
