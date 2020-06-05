@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"syscall"
 	"time"
 
@@ -531,8 +530,7 @@ func (d *Driver) ExecTaskStreamingRaw(ctx context.Context, taskID string, comman
 	pspec := spec.Process
 	pspec.Terminal = tty
 	pspec.Args = command
-	s := strings.Split(taskID, "/")
-	execID := s[len(s)-1] + "-exec"
+	execID := getRandomID(8)
 
 	opts, doneCh := drivers.StreamToExecOptions(
 		ctx, command, tty, stream)
