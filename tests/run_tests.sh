@@ -3,7 +3,9 @@
 set -euo pipefail
 
 export NOMAD_VERSION=0.11.2
+export CONTAINERD_VERSION=1.3.4
 export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:/usr/local/bin
 export GOPATH=/home/circleci/go
 export GO_VERSION=1.14.3
 
@@ -39,6 +41,20 @@ main() {
 		echo "Error in getting redis job status."
 		exit 1
 	fi
+	# Even though $(nomad job status) reports redis job status as "running"
+	# The actual container process might not be running yet.
+	# We need to wait for actual container to start running before trying exec.
+	echo "Wait for redis container to get into RUNNING state, before trying exec."
+	set +e
+	while true
+	do
+		sudo CONTAINERD_NAMESPACE=nomad ctr task ls|grep -q RUNNING
+		if [ $? -eq 0 ]; then
+			echo "redis container is up and running"
+			break
+		fi
+	done
+	set -e
 	echo "Checking status of signal handler job."
 	signal_status=$(nomad job status -short signal|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
         if [ $signal_status != "running" ];then
@@ -55,6 +71,12 @@ main() {
 	signal_status=$(nomad job inspect signal|jq -r '.Job .Status')
 	if [ $signal_status != "running" ]; then
 		echo "Error in inspecting signal handler job."
+		exit 1
+	fi
+	echo "Exec redis job."
+	exec_output=$(nomad alloc exec -job redis echo hello_exec)
+	if [ $exec_output != "hello_exec" ]; then
+		echo "Error in exec'ing redis job."
 		exit 1
 	fi
 	echo "Stopping nomad redis job."
@@ -81,17 +103,60 @@ setup() {
 	sudo pkill --signal SIGKILL -P $(ps faux | grep 'daily' | awk '{print $2}')
 	set -e
 
-	sudo apt-get install -y apt-utils curl unzip make build-essential
-
-	# Stop docker daemon. We only want containerd daemon running.
+	# Remove docker daemon and containerd.
 	sudo systemctl stop docker
+	sudo systemctl stop containerd
+	sudo apt-get purge -y docker-ce docker-ce-cli containerd.io
+
+	sudo apt-get install -y apt-utils curl runc unzip make build-essential
+
+	# Change $(pwd) to /tmp
+        cd /tmp
+
+	# Install containerd 1.3.4
+	curl -L -o containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
+	sudo tar -C /usr/local -xzf containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
+	rm -f containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
+
+	# Drop containerd systemd unit file into /lib/systemd/system.
+        cat << EOF > containerd.service
+# /lib/systemd/system/nomad.service
+[Unit]
+Description=containerd container runtime
+Documentation=https://containerd.io
+After=network.target
+
+[Service]
+ExecStartPre=-/sbin/modprobe overlay
+ExecStart=/usr/local/bin/containerd
+KillMode=process
+Delegate=yes
+LimitNOFILE=1048576
+# Having non-zero Limit*s causes performance problems due to accounting overhead
+# in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+        sudo mv containerd.service /lib/systemd/system/containerd.service
+        sudo systemctl daemon-reload
+        echo "Starting containerd daemon."
+        sudo systemctl start containerd
+        while true
+        do
+                if (systemctl -q is-active "containerd.service"); then
+                        echo "systemd containerd.service is up and running"
+                        break
+                fi
+        done
 
 	# Remove default golang (1.7.3) and install a custom version (1.14.3) of golang.
 	# This is required for supporting go mod, and to be able to compile nomad-driver-containerd.
 	sudo rm -rf /usr/local/go
-
-	# Change $(pwd) to /tmp
-	cd /tmp
 
 	# Install golang 1.14.3
 	curl -L -o go${GO_VERSION}.linux-amd64.tar.gz https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz
