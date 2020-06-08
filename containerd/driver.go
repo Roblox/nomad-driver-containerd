@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/hashicorp/consul-template/signals"
 	"github.com/hashicorp/go-hclog"
@@ -517,66 +516,12 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 }
 
 func (d *Driver) ExecTaskStreaming(ctx context.Context, taskID string, opts *drivers.ExecOptions) (*drivers.ExitResult, error) {
-	defer opts.Stdout.Close()
-	defer opts.Stderr.Close()
-
 	handle, ok := d.tasks.Get(taskID)
 	if !ok {
 		return nil, drivers.ErrTaskNotFound
 	}
 
-	spec, err := handle.container.Spec(d.ctxContainerd)
-	if err != nil {
-		return nil, err
-	}
-
-	pspec := spec.Process
-	pspec.Terminal = opts.Tty
-	pspec.Args = opts.Command
-	execID := getRandomID(8)
-
-	cioOpts := []cio.Opt{cio.WithStreams(opts.Stdin, opts.Stdout, opts.Stderr)}
-	if opts.Tty {
-		cioOpts = append(cioOpts, cio.WithTerminal)
-	}
-	ioCreator := cio.NewCreator(cioOpts...)
-
-	process, err := handle.task.Exec(d.ctxContainerd, execID, pspec, ioCreator)
-	if err != nil {
-		return nil, err
-	}
-
-	defer process.Delete(d.ctxContainerd)
-
-	statusC, err := process.Wait(d.ctxContainerd)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := process.Start(d.ctxContainerd); err != nil {
-		return nil, err
-	}
-
-	var code uint32
-	status := <-statusC
-	code, _, err = status.Result()
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	return &drivers.ExitResult{
-		ExitCode: int(code),
-	}, nil
-
+	return handle.exec(ctx, d.ctxContainerd, taskID, opts)
 }
 
 // ExecTask returns the result of executing the given command inside a task.
