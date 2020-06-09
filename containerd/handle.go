@@ -11,6 +11,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/hashicorp/go-hclog"
+	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/nomad/plugins/drivers"
 )
 
@@ -93,7 +94,10 @@ func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opt
 	pspec := spec.Process
 	pspec.Terminal = opts.Tty
 	pspec.Args = opts.Command
-	execID := getRandomID(8)
+	execID, err := uuid.GenerateUUID()
+	if err != nil {
+		return nil, err
+	}
 
 	cioOpts := []cio.Opt{cio.WithStreams(opts.Stdin, opts.Stdout, opts.Stderr)}
 	if opts.Tty {
@@ -101,7 +105,7 @@ func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opt
 	}
 	ioCreator := cio.NewCreator(cioOpts...)
 
-	process, err := h.task.Exec(ctxContainerd, execID, pspec, ioCreator)
+	process, err := h.task.Exec(ctxContainerd, execID[:8], pspec, ioCreator)
 	if err != nil {
 		return nil, err
 	}
