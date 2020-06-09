@@ -82,6 +82,7 @@ func (h *taskHandle) run(ctxContainerd context.Context) {
 	h.task.Start(ctxContainerd)
 }
 
+// exec launches a new process in a running container.
 func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opts *drivers.ExecOptions) (*drivers.ExitResult, error) {
 	defer opts.Stdout.Close()
 	defer opts.Stderr.Close()

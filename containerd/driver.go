@@ -515,6 +515,7 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 	return handle.signal(d.ctxContainerd, sig)
 }
 
+// ExecTaskStreaming returns the result of executing the given command inside a task.
 func (d *Driver) ExecTaskStreaming(ctx context.Context, taskID string, opts *drivers.ExecOptions) (*drivers.ExitResult, error) {
 	handle, ok := d.tasks.Get(taskID)
 	if !ok {
