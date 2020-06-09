@@ -30,6 +30,7 @@ require (
 	github.com/hashicorp/go-getter v1.4.0 // indirect
 	github.com/hashicorp/go-hclog v0.10.0
 	github.com/hashicorp/go-plugin v1.0.1
+	github.com/hashicorp/go-uuid v1.0.1
 	github.com/hashicorp/hcl2 v0.0.0-20191002203319-fb75b3253c80 // indirect
 	github.com/hashicorp/nomad v0.10.1
 	github.com/hashicorp/nomad/api v0.0.0-20191203164002-b31573ae7206 // indirect

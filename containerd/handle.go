@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
 	"github.com/hashicorp/go-hclog"
+	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/nomad/plugins/drivers"
 )
 
@@ -78,6 +80,68 @@ func (h *taskHandle) run(ctxContainerd context.Context) {
 	time.Sleep(5 * time.Second)
 
 	h.task.Start(ctxContainerd)
+}
+
+// exec launches a new process in a running container.
+func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opts *drivers.ExecOptions) (*drivers.ExitResult, error) {
+	defer opts.Stdout.Close()
+	defer opts.Stderr.Close()
+
+	spec, err := h.container.Spec(ctxContainerd)
+	if err != nil {
+		return nil, err
+	}
+
+	pspec := spec.Process
+	pspec.Terminal = opts.Tty
+	pspec.Args = opts.Command
+	execID, err := uuid.GenerateUUID()
+	if err != nil {
+		return nil, err
+	}
+
+	cioOpts := []cio.Opt{cio.WithStreams(opts.Stdin, opts.Stdout, opts.Stderr)}
+	if opts.Tty {
+		cioOpts = append(cioOpts, cio.WithTerminal)
+	}
+	ioCreator := cio.NewCreator(cioOpts...)
+
+	process, err := h.task.Exec(ctxContainerd, execID[:8], pspec, ioCreator)
+	if err != nil {
+		return nil, err
+	}
+
+	defer process.Delete(ctxContainerd)
+
+	statusC, err := process.Wait(ctxContainerd)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := process.Start(ctxContainerd); err != nil {
+		return nil, err
+	}
+
+	var code uint32
+	status := <-statusC
+	code, _, err = status.Result()
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return &drivers.ExitResult{
+		ExitCode: int(code),
+	}, nil
+
 }
 
 func (h *taskHandle) shutdown(ctxContainerd context.Context, timeout time.Duration, signal syscall.Signal) error {
