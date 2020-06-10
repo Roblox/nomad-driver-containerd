@@ -292,8 +292,14 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 
 	d.logger.Info(fmt.Sprintf("Successfully pulled %s image\n", image.Name()))
 
+	// Setup environment variables.
+	var env []string
+	for key, val := range cfg.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
 	containerSnapshotName := fmt.Sprintf("%s-snapshot", containerName)
-	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime)
+	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, env)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
