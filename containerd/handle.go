@@ -8,8 +8,12 @@ import (
 	"syscall"
 	"time"
 
+	v1 "github.com/containerd/cgroups/stats/v1"
+	v2 "github.com/containerd/cgroups/v2/stats"
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/typeurl"
 	"github.com/hashicorp/go-hclog"
 	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/nomad/plugins/drivers"
@@ -177,8 +181,78 @@ func (h *taskHandle) cleanup(ctxContainerd context.Context) error {
 	return nil
 }
 
-func (h *taskHandle) stats(ctx context.Context, interval time.Duration) (<-chan *drivers.TaskResourceUsage, error) {
-	return nil, nil
+func (h *taskHandle) stats(ctx, ctxContainerd context.Context, interval time.Duration) (<-chan *drivers.TaskResourceUsage, error) {
+	ch := make(chan *drivers.TaskResourceUsage)
+	go h.handleStats(ch, ctx, ctxContainerd, interval)
+
+	return ch, nil
+}
+
+func (h *taskHandle) handleStats(ch chan *drivers.TaskResourceUsage, ctx, ctxContainerd context.Context, interval time.Duration) {
+	statsInterval, err := time.ParseDuration("30s")
+	if err != nil {
+		h.logger.Info("Error in parsing time interval.")
+		return
+	}
+
+	interval = statsInterval
+
+	defer close(ch)
+	timer := time.NewTimer(0)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			h.logger.Info("HELLO: timer.C")
+			timer.Reset(interval)
+		}
+
+		// Get containerd task metric
+		metric, err := h.task.Metrics(ctxContainerd)
+		if err != nil {
+			h.logger.Error("Failed to get task metric:", "error", err)
+			return
+		}
+
+		h.logger.Info("HELLO: STEP 1")
+
+		anydata, err := typeurl.UnmarshalAny(metric.Data)
+		if err != nil {
+			h.logger.Error("Failed to unmarshal metric data:", "error", err)
+		}
+
+		var (
+			data  *v1.Metrics
+			data2 *v2.Metrics
+		)
+
+		switch v := anydata.(type) {
+		case *v1.Metrics:
+			h.logger.Info("HELLO: v1.Metrics")
+			data = v
+		case *v2.Metrics:
+			h.logger.Info("HELLO: v2.Metrics")
+			data2 = v
+		default:
+			h.logger.Error("Cannot convert metric data to cgroups.Metrics")
+			return
+		}
+
+		h.logger.Info(fmt.Sprintf("V1 Metrics: %+v\n", data))
+		h.logger.Info(fmt.Sprintf("V2 Metrics: %+v\n", data2))
+
+		select {
+		case <-ctx.Done():
+			return
+		case ch <- h.getTaskResourceUsage(metric):
+		}
+	}
+}
+
+// Convert containerd task metric to TaskResourceUsage.
+func (h *taskHandle) getTaskResourceUsage(metric *types.Metric) *drivers.TaskResourceUsage {
+	return nil
 }
 
 func (h *taskHandle) signal(ctxContainerd context.Context, sig os.Signal) error {
