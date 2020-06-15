@@ -240,6 +240,7 @@ func (h *taskHandle) getV1TaskResourceUsage(metrics *v1.Metrics) *drivers.TaskRe
 	}
 
 	ms := &drivers.MemoryStats{
+		Usage: metrics.Memory.Usage.Usage,
 		RSS:   metrics.Memory.RSS,
 		Cache: metrics.Memory.Cache,
 	}
