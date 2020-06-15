@@ -98,6 +98,7 @@ setup() {
 	sudo systemctl stop containerd
 	sudo apt-get purge -y docker-ce docker-ce-cli containerd.io
 
+	sudo apt-get update
 	sudo apt-get install -y apt-utils curl runc unzip make build-essential
 
 	# Change $(pwd) to /tmp

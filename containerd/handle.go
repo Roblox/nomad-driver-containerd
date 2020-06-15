@@ -211,20 +211,13 @@ func (h *taskHandle) handleStats(ch chan *drivers.TaskResourceUsage, ctx, ctxCon
 			return
 		}
 
-		var (
-			data  *v1.Metrics
-			data2 *v2.Metrics
-		)
-
 		var taskResourceUsage *drivers.TaskResourceUsage
 
-		switch v := anydata.(type) {
+		switch data := anydata.(type) {
 		case *v1.Metrics:
-			data = v
 			taskResourceUsage = h.getV1TaskResourceUsage(data)
 		case *v2.Metrics:
-			data2 = v
-			taskResourceUsage = h.getV2TaskResourceUsage(data2)
+			taskResourceUsage = h.getV2TaskResourceUsage(data)
 		default:
 			h.logger.Error("Cannot convert metric data to cgroups.Metrics")
 			return
@@ -263,7 +256,25 @@ func (h *taskHandle) getV1TaskResourceUsage(metrics *v1.Metrics) *drivers.TaskRe
 
 // Convert containerd V2 task metrics to TaskResourceUsage.
 func (h *taskHandle) getV2TaskResourceUsage(metrics *v2.Metrics) *drivers.TaskResourceUsage {
-	return nil
+	cs := &drivers.CpuStats{
+		SystemMode: float64(metrics.CPU.SystemUsec),
+		UserMode:   float64(metrics.CPU.UserUsec),
+		TotalTicks: float64(metrics.CPU.UsageUsec),
+	}
+
+	ms := &drivers.MemoryStats{
+		Usage: metrics.Memory.Usage,
+		Swap:  metrics.Memory.SwapUsage,
+	}
+
+	ts := time.Now().UTC().UnixNano()
+	return &drivers.TaskResourceUsage{
+		ResourceUsage: &drivers.ResourceUsage{
+			CpuStats:    cs,
+			MemoryStats: ms,
+		},
+		Timestamp: ts,
+	}
 }
 func (h *taskHandle) signal(ctxContainerd context.Context, sig os.Signal) error {
 	return h.task.Kill(ctxContainerd, sig.(syscall.Signal))
