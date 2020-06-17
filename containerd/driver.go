@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/consul-template/signals"
 	"github.com/hashicorp/go-hclog"
 	log "github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/nomad/client/stats"
 	"github.com/hashicorp/nomad/drivers/shared/eventer"
 	"github.com/hashicorp/nomad/plugins/base"
 	"github.com/hashicorp/nomad/plugins/drivers"
@@ -314,13 +315,16 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	d.logger.Info(fmt.Sprintf("Successfully created task with ID: %s", task.ID()))
 
 	h := &taskHandle{
-		taskConfig:    cfg,
-		procState:     drivers.TaskStateRunning,
-		startedAt:     time.Now().Round(time.Millisecond),
-		logger:        d.logger,
-		container:     container,
-		containerName: containerName,
-		task:          task,
+		taskConfig:     cfg,
+		procState:      drivers.TaskStateRunning,
+		startedAt:      time.Now().Round(time.Millisecond),
+		logger:         d.logger,
+		totalCpuStats:  stats.NewCpuStats(),
+		userCpuStats:   stats.NewCpuStats(),
+		systemCpuStats: stats.NewCpuStats(),
+		container:      container,
+		containerName:  containerName,
+		task:           task,
 	}
 
 	driverState := TaskState{
@@ -373,14 +377,17 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 	}
 
 	h := &taskHandle{
-		taskConfig:    handle.Config,
-		procState:     drivers.TaskStateRunning,
-		startedAt:     taskState.StartedAt,
-		exitResult:    &drivers.ExitResult{},
-		logger:        d.logger,
-		container:     container,
-		containerName: taskState.ContainerName,
-		task:          task,
+		taskConfig:     handle.Config,
+		procState:      drivers.TaskStateRunning,
+		startedAt:      taskState.StartedAt,
+		exitResult:     &drivers.ExitResult{},
+		logger:         d.logger,
+		totalCpuStats:  stats.NewCpuStats(),
+		userCpuStats:   stats.NewCpuStats(),
+		systemCpuStats: stats.NewCpuStats(),
+		container:      container,
+		containerName:  taskState.ContainerName,
+		task:           task,
 	}
 
 	d.tasks.Set(handle.Config.ID, h)
