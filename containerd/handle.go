@@ -8,10 +8,15 @@ import (
 	"syscall"
 	"time"
 
+	v1 "github.com/containerd/cgroups/stats/v1"
+	v2 "github.com/containerd/cgroups/v2/stats"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/typeurl"
 	"github.com/hashicorp/go-hclog"
 	uuid "github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/nomad/client/stats"
+	hstats "github.com/hashicorp/nomad/helper/stats"
 	"github.com/hashicorp/nomad/plugins/drivers"
 )
 
@@ -22,15 +27,18 @@ type taskHandle struct {
 	// stateLock syncs access to all fields below
 	stateLock sync.RWMutex
 
-	logger        hclog.Logger
-	taskConfig    *drivers.TaskConfig
-	procState     drivers.TaskState
-	startedAt     time.Time
-	completedAt   time.Time
-	exitResult    *drivers.ExitResult
-	containerName string
-	container     containerd.Container
-	task          containerd.Task
+	logger         hclog.Logger
+	taskConfig     *drivers.TaskConfig
+	procState      drivers.TaskState
+	startedAt      time.Time
+	completedAt    time.Time
+	exitResult     *drivers.ExitResult
+	totalCpuStats  *stats.CpuStats
+	userCpuStats   *stats.CpuStats
+	systemCpuStats *stats.CpuStats
+	containerName  string
+	container      containerd.Container
+	task           containerd.Task
 }
 
 func (h *taskHandle) TaskStatus(ctxContainerd context.Context) *drivers.TaskStatus {
@@ -74,6 +82,11 @@ func (h *taskHandle) IsRunning(ctxContainerd context.Context) (bool, error) {
 func (h *taskHandle) run(ctxContainerd context.Context) {
 	h.stateLock.Lock()
 	defer h.stateLock.Unlock()
+
+	// Every executor runs this init at creation for stats
+	if err := hstats.Init(); err != nil {
+		h.logger.Error("unable to initialize stats", "error", err)
+	}
 
 	// Sleep for 5 seconds to allow h.task.Wait() to kick in.
 	// TODO: Use goroutine and a channel to synchronize this, instead of sleep.
@@ -177,10 +190,113 @@ func (h *taskHandle) cleanup(ctxContainerd context.Context) error {
 	return nil
 }
 
-func (h *taskHandle) stats(ctx context.Context, interval time.Duration) (<-chan *drivers.TaskResourceUsage, error) {
-	return nil, nil
+func (h *taskHandle) stats(ctx, ctxContainerd context.Context, interval time.Duration) (<-chan *drivers.TaskResourceUsage, error) {
+	ch := make(chan *drivers.TaskResourceUsage)
+	go h.handleStats(ch, ctx, ctxContainerd, interval)
+
+	return ch, nil
 }
 
+func (h *taskHandle) handleStats(ch chan *drivers.TaskResourceUsage, ctx, ctxContainerd context.Context, interval time.Duration) {
+	defer close(ch)
+	timer := time.NewTimer(0)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			timer.Reset(interval)
+		}
+
+		// Get containerd task metric
+		metric, err := h.task.Metrics(ctxContainerd)
+		if err != nil {
+			h.logger.Error("Failed to get task metric:", "error", err)
+			return
+		}
+
+		anydata, err := typeurl.UnmarshalAny(metric.Data)
+		if err != nil {
+			h.logger.Error("Failed to unmarshal metric data:", "error", err)
+			return
+		}
+
+		var taskResourceUsage *drivers.TaskResourceUsage
+
+		switch data := anydata.(type) {
+		case *v1.Metrics:
+			taskResourceUsage = h.getV1TaskResourceUsage(data)
+		case *v2.Metrics:
+			taskResourceUsage = h.getV2TaskResourceUsage(data)
+		default:
+			h.logger.Error("Cannot convert metric data to cgroups.Metrics")
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case ch <- taskResourceUsage:
+		}
+	}
+}
+
+// Convert containerd V1 task metrics to TaskResourceUsage.
+func (h *taskHandle) getV1TaskResourceUsage(metrics *v1.Metrics) *drivers.TaskResourceUsage {
+	totalPercent := h.totalCpuStats.Percent(float64(metrics.CPU.Usage.Total))
+	cs := &drivers.CpuStats{
+		SystemMode: h.systemCpuStats.Percent(float64(metrics.CPU.Usage.Kernel)),
+		UserMode:   h.userCpuStats.Percent(float64(metrics.CPU.Usage.User)),
+		Percent:    totalPercent,
+		TotalTicks: h.totalCpuStats.TicksConsumed(totalPercent),
+		Measured:   []string{"Percent", "System Mode", "User Mode"},
+	}
+
+	ms := &drivers.MemoryStats{
+		RSS:      metrics.Memory.RSS,
+		Cache:    metrics.Memory.Cache,
+		Swap:     metrics.Memory.Swap.Usage,
+		Usage:    metrics.Memory.Usage.Usage,
+		MaxUsage: metrics.Memory.Usage.Max,
+		Measured: []string{"RSS", "Cache", "Swap", "Usage"},
+	}
+
+	ts := time.Now().UTC().UnixNano()
+	return &drivers.TaskResourceUsage{
+		ResourceUsage: &drivers.ResourceUsage{
+			CpuStats:    cs,
+			MemoryStats: ms,
+		},
+		Timestamp: ts,
+	}
+}
+
+// Convert containerd V2 task metrics to TaskResourceUsage.
+func (h *taskHandle) getV2TaskResourceUsage(metrics *v2.Metrics) *drivers.TaskResourceUsage {
+	totalPercent := h.totalCpuStats.Percent(float64(metrics.CPU.SystemUsec + metrics.CPU.UserUsec))
+	cs := &drivers.CpuStats{
+		SystemMode: h.systemCpuStats.Percent(float64(metrics.CPU.SystemUsec)),
+		UserMode:   h.userCpuStats.Percent(float64(metrics.CPU.UserUsec)),
+		Percent:    totalPercent,
+		TotalTicks: h.totalCpuStats.TicksConsumed(totalPercent),
+		Measured:   []string{"Percent", "System Mode", "User Mode"},
+	}
+
+	ms := &drivers.MemoryStats{
+		Swap:     metrics.Memory.SwapUsage,
+		Usage:    metrics.Memory.Usage,
+		Measured: []string{"Swap", "Usage"},
+	}
+
+	ts := time.Now().UTC().UnixNano()
+	return &drivers.TaskResourceUsage{
+		ResourceUsage: &drivers.ResourceUsage{
+			CpuStats:    cs,
+			MemoryStats: ms,
+		},
+		Timestamp: ts,
+	}
+}
 func (h *taskHandle) signal(ctxContainerd context.Context, sig os.Signal) error {
 	return h.task.Kill(ctxContainerd, sig.(syscall.Signal))
 }

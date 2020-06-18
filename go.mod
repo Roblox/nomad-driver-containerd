@@ -10,8 +10,10 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/appc/spec v0.8.11 // indirect
 	github.com/checkpoint-restore/go-criu v0.0.0-20191125063657-fcdcd07065c5 // indirect
+	github.com/containerd/cgroups v0.0.0-20200609174450-80c669f4bad0
 	github.com/containerd/containerd v1.3.0
 	github.com/containerd/go-cni v0.0.0-20191121212822-60d125212faf // indirect
+	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
 	github.com/containernetworking/plugins v0.8.3 // indirect
 	github.com/coreos/go-iptables v0.4.3 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
@@ -49,7 +51,7 @@ require (
 )
 
 // use lower-case sirupsen
-replace github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.4.2
+replace github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.4.1
 
 // don't use shirou/gopsutil, use the hashicorp fork
 replace github.com/shirou/gopsutil => github.com/hashicorp/gopsutil v2.17.13-0.20190117153606-62d5761ddb7d+incompatible

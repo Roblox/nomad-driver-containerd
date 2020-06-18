@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/consul-template/signals"
 	"github.com/hashicorp/go-hclog"
 	log "github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/nomad/client/stats"
 	"github.com/hashicorp/nomad/drivers/shared/eventer"
 	"github.com/hashicorp/nomad/plugins/base"
 	"github.com/hashicorp/nomad/plugins/drivers"
@@ -60,6 +61,7 @@ var (
 			hclspec.NewLiteral("true"),
 		),
 		"containerd_runtime": hclspec.NewAttr("containerd_runtime", "string", true),
+		"stats_interval":     hclspec.NewAttr("stats_interval", "string", false),
 	})
 
 	// taskConfigSpec is the specification of the plugin's configuration for
@@ -84,6 +86,7 @@ var (
 type Config struct {
 	Enabled           bool   `codec:"enabled"`
 	ContainerdRuntime string `codec:"containerd_runtime"`
+	StatsInterval     string `codec:"stats_interval"`
 }
 
 // TaskConfig contains configuration information for a task that runs with
@@ -314,13 +317,16 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	d.logger.Info(fmt.Sprintf("Successfully created task with ID: %s", task.ID()))
 
 	h := &taskHandle{
-		taskConfig:    cfg,
-		procState:     drivers.TaskStateRunning,
-		startedAt:     time.Now().Round(time.Millisecond),
-		logger:        d.logger,
-		container:     container,
-		containerName: containerName,
-		task:          task,
+		taskConfig:     cfg,
+		procState:      drivers.TaskStateRunning,
+		startedAt:      time.Now().Round(time.Millisecond),
+		logger:         d.logger,
+		totalCpuStats:  stats.NewCpuStats(),
+		userCpuStats:   stats.NewCpuStats(),
+		systemCpuStats: stats.NewCpuStats(),
+		container:      container,
+		containerName:  containerName,
+		task:           task,
 	}
 
 	driverState := TaskState{
@@ -373,14 +379,17 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 	}
 
 	h := &taskHandle{
-		taskConfig:    handle.Config,
-		procState:     drivers.TaskStateRunning,
-		startedAt:     taskState.StartedAt,
-		exitResult:    &drivers.ExitResult{},
-		logger:        d.logger,
-		container:     container,
-		containerName: taskState.ContainerName,
-		task:          task,
+		taskConfig:     handle.Config,
+		procState:      drivers.TaskStateRunning,
+		startedAt:      taskState.StartedAt,
+		exitResult:     &drivers.ExitResult{},
+		logger:         d.logger,
+		totalCpuStats:  stats.NewCpuStats(),
+		userCpuStats:   stats.NewCpuStats(),
+		systemCpuStats: stats.NewCpuStats(),
+		container:      container,
+		containerName:  taskState.ContainerName,
+		task:           task,
 	}
 
 	d.tasks.Set(handle.Config.ID, h)
@@ -492,7 +501,18 @@ func (d *Driver) TaskStats(ctx context.Context, taskID string, interval time.Dur
 		return nil, drivers.ErrTaskNotFound
 	}
 
-	return handle.stats(ctx, interval)
+	if d.config.StatsInterval != "" {
+		statsInterval, err := time.ParseDuration(d.config.StatsInterval)
+		if err != nil {
+			d.logger.Warn("Error parsing driver stats interval, fallback on default interval")
+		} else {
+			msg := fmt.Sprintf("Overriding client stats interval: %v with driver stats interval: %v", interval, d.config.StatsInterval)
+			d.logger.Debug(msg)
+			interval = statsInterval
+		}
+	}
+
+	return handle.stats(ctx, d.ctxContainerd, interval)
 }
 
 // TaskEvents returns a channel that the plugin can use to emit task related events.
