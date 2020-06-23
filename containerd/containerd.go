@@ -1,6 +1,8 @@
 package containerd
 
 import (
+	"fmt"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/oci"
@@ -18,13 +20,40 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
 }
 
-func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime string, env []string) (containerd.Container, error) {
+func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime string, env []string, config *TaskConfig) (containerd.Container, error) {
+	if config.Command == "" && len(config.Args) > 0 {
+		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
+	}
+
+	var args []string
+	if config.Command != "" {
+		args = append(args, config.Command)
+	}
+
+	if len(config.Args) > 0 {
+		args = append(args, config.Args...)
+	}
+
+	var opts []oci.SpecOpts
+
+	opts = append(opts, oci.WithImageConfigArgs(image, args))
+
+	if len(config.CapAdd) > 0 {
+		opts = append(opts, oci.WithCapabilities(config.CapAdd))
+	}
+
+	if len(config.CapDrop) > 0 {
+		opts = append(opts, oci.WithDroppedCapabilities(config.CapDrop))
+	}
+
+	opts = append(opts, oci.WithEnv(env))
+
 	return d.client.NewContainer(
 		d.ctxContainerd,
 		containerName,
 		containerd.WithRuntime(containerdRuntime, nil),
 		containerd.WithNewSnapshot(containerSnapshotName, image),
-		containerd.WithNewSpec(oci.WithImageConfig(image), oci.WithEnv(env)),
+		containerd.WithNewSpec(opts...),
 	)
 }
 
