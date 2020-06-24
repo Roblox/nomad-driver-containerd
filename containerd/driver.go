@@ -69,7 +69,11 @@ var (
 	// this is used to validate the configuration specified for the plugin
 	// when a job is submitted.
 	taskConfigSpec = hclspec.NewObject(map[string]*hclspec.Spec{
-		"image": hclspec.NewAttr("image", "string", true),
+		"image":    hclspec.NewAttr("image", "string", true),
+		"command":  hclspec.NewAttr("command", "string", false),
+		"args":     hclspec.NewAttr("args", "list(string)", false),
+		"cap_add":  hclspec.NewAttr("cap_add", "list(string)", false),
+		"cap_drop": hclspec.NewAttr("cap_drop", "list(string)", false),
 	})
 
 	// capabilities indicates what optional features this driver supports
@@ -92,7 +96,11 @@ type Config struct {
 // TaskConfig contains configuration information for a task that runs with
 // this plugin
 type TaskConfig struct {
-	Image string `codec:"image"`
+	Image   string   `codec:"image"`
+	Command string   `codec:"command"`
+	Args    []string `codec:"args"`
+	CapAdd  []string `codec:"cap_add"`
+	CapDrop []string `codec:"cap_drop"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
@@ -302,7 +310,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 
 	containerSnapshotName := fmt.Sprintf("%s-snapshot", containerName)
-	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, env)
+	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, env, &driverConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
