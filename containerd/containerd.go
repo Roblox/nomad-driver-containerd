@@ -39,7 +39,7 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	opts = append(opts, oci.WithImageConfigArgs(image, args))
 
 	if len(config.CapAdd) > 0 {
-		opts = append(opts, oci.WithCapabilities(config.CapAdd))
+		opts = append(opts, oci.WithAddedCapabilities(config.CapAdd))
 	}
 
 	if len(config.CapDrop) > 0 {
