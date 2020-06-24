@@ -8,7 +8,7 @@ $ nomad job run redis.nomad
 ```
 will start a `redis` server using `nomad-driver-containerd`
 
-### Exec into redis container
+**Exec into redis container**
 
 ```
 $ nomad job status redis
@@ -59,4 +59,39 @@ Copy the allocation ID from the output of `nomad job status` command.
 While the container is running, you can check the stats using:
 ```
 $ nomad alloc status -stats <allocation_id>
+```
+
+## Capabilities
+
+```
+$ nomad job run capabilities.nomad
+```
+will start an `ubuntu:16.04` container using `nomad-driver-containerd`.
+This container sleeps for 10 mins (600 seconds) and add (and drop) the following capabilities.
+
+**New capabilities added:**
+```
+CAP_SYS_ADMIN
+CAP_IPC_OWNER
+CAP_IPC_LOCK
+```
+**Existing capabilities dropped:**
+```
+CAP_CHOWN
+CAP_SYS_CHROOT
+CAP_DAC_OVERRIDE
+```
+**Exec into capabilities container to check capabilities**
+
+```
+$ nomad job status capabilities
+```
+Copy the allocation ID from the output of `nomad job status` command.
+
+```
+$ nomad alloc exec -i -t <allocation_id> /bin/bash
+```
+Print capabilities (Inside the container)
+```
+$ capsh --print
 ```
