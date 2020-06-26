@@ -42,6 +42,10 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 		opts = append(opts, oci.WithPrivileged)
 	}
 
+	if config.ReadOnlyRootfs {
+		opts = append(opts, oci.WithRootFSReadonly())
+	}
+
 	if len(config.CapAdd) > 0 {
 		opts = append(opts, oci.WithAddedCapabilities(config.CapAdd))
 	}
