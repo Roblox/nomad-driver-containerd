@@ -300,7 +300,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 
 	// Generate a random container name using docker namesgenerator package.
 	// https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go
-	containerName := namesgenerator.GetRandomName(1)
+	containerName := namesgenerator.GetRandomName(1) + "_" + cfg.AllocID[:8]
 
 	image, err := d.pullImage(driverConfig.Image)
 	if err != nil {
