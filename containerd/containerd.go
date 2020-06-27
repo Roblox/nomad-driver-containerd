@@ -25,11 +25,13 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
 	}
 
+	// Command set by the user, to override entrypoint or cmd defined in the image.
 	var args []string
 	if config.Command != "" {
 		args = append(args, config.Command)
 	}
 
+	// Arguments to the command set by the user.
 	if len(config.Args) > 0 {
 		args = append(args, config.Args...)
 	}
@@ -38,22 +40,27 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 
 	opts = append(opts, oci.WithImageConfigArgs(image, args))
 
+	// Enable privileged mode.
 	if config.Privileged {
 		opts = append(opts, oci.WithPrivileged)
 	}
 
+	// Launch container in read-only mode.
 	if config.ReadOnlyRootfs {
 		opts = append(opts, oci.WithRootFSReadonly())
 	}
 
+	// Add capabilities.
 	if len(config.CapAdd) > 0 {
 		opts = append(opts, oci.WithAddedCapabilities(config.CapAdd))
 	}
 
+	// Drop capabilities.
 	if len(config.CapDrop) > 0 {
 		opts = append(opts, oci.WithDroppedCapabilities(config.CapDrop))
 	}
 
+	// Set environment variables.
 	opts = append(opts, oci.WithEnv(env))
 
 	// Add linux devices into the container.

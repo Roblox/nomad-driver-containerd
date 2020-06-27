@@ -77,6 +77,15 @@ var (
 		"devices":         hclspec.NewAttr("devices", "list(string)", false),
 		"privileged":      hclspec.NewAttr("privileged", "bool", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
+		"mounts": hclspec.NewBlockList("mounts", hclspec.NewObject(map[string]*hclspec.Spec{
+			"type": hclspec.NewDefault(
+				hclspec.NewAttr("type", "string", false),
+				hclspec.NewLiteral("\"volume\""),
+			),
+			"target":  hclspec.NewAttr("target", "string", false),
+			"source":  hclspec.NewAttr("source", "string", false),
+			"options": hclspec.NewAttr("options", "list(string)", false),
+		})),
 	})
 
 	// capabilities indicates what optional features this driver supports
@@ -96,6 +105,15 @@ type Config struct {
 	StatsInterval     string `codec:"stats_interval"`
 }
 
+// Volume, bind, and tmpfs type mounts are supported.
+// Mount contains configuration information about a mountpoint.
+type Mount struct {
+	Type    string   `codec:"type"`
+	Target  string   `codec:"target"`
+	Source  string   `codec:"source"`
+	Options []string `codec:"options"`
+}
+
 // TaskConfig contains configuration information for a task that runs with
 // this plugin
 type TaskConfig struct {
@@ -107,6 +125,7 @@ type TaskConfig struct {
 	Devices        []string `codec:"devices"`
 	Privileged     bool     `codec:"privileged"`
 	ReadOnlyRootfs bool     `codec:"readonly_rootfs"`
+	Mounts         []Mount  `codec:"mounts"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
