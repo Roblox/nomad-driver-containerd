@@ -69,7 +69,9 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 		opts = append(opts, oci.WithLinuxDevice(device, "rwm"))
 	}
 
-	// Set mounts.
+	// Set mounts. fstab style mount options are supported.
+	// List of all supported mount options.
+	// https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L187-L211
 	mounts := make([]specs.Mount, 0)
 	for _, mount := range config.Mounts {
 		m := specs.Mount{}
