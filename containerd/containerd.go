@@ -6,6 +6,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/oci"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 func (d *Driver) isContainerdRunning() (bool, error) {
@@ -66,6 +67,21 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	// Add linux devices into the container.
 	for _, device := range config.Devices {
 		opts = append(opts, oci.WithLinuxDevice(device, "rwm"))
+	}
+
+	// Set mounts.
+	mounts := make([]specs.Mount, 0)
+	for _, mount := range config.Mounts {
+		m := specs.Mount{}
+		m.Type = mount.Type
+		m.Destination = mount.Target
+		m.Source = mount.Source
+		m.Options = mount.Options
+		mounts = append(mounts, m)
+	}
+
+	if len(mounts) > 0 {
+		opts = append(opts, oci.WithMounts(mounts))
 	}
 
 	return d.client.NewContainer(

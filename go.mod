@@ -40,6 +40,7 @@ require (
 	github.com/moby/moby v1.13.1
 	github.com/mrunalp/fileutils v0.0.0-20171103030105-7d4729fb3618 // indirect
 	github.com/opencontainers/runc v1.0.0-rc8.0.20190611121236-6cc515888830 // indirect
+	github.com/opencontainers/runtime-spec v1.0.2
 	github.com/opencontainers/selinux v1.3.1 // indirect
 	github.com/seccomp/libseccomp-golang v0.9.1 // indirect
 	github.com/shirou/gopsutil v2.19.11+incompatible // indirect
