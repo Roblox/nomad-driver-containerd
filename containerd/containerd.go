@@ -74,6 +74,10 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	// https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L187-L211
 	mounts := make([]specs.Mount, 0)
 	for _, mount := range config.Mounts {
+		if (mount.Type == "bind" || mount.Type == "volume") && len(mount.Options) <= 0 {
+			return nil, fmt.Errorf("Options cannot be empty for mount type: %s. You need to atleast pass rbind and ro.", mount.Type)
+		}
+
 		m := specs.Mount{}
 		m.Type = mount.Type
 		m.Destination = mount.Target

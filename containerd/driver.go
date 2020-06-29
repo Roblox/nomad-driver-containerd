@@ -82,7 +82,7 @@ var (
 				hclspec.NewAttr("type", "string", false),
 				hclspec.NewLiteral("\"volume\""),
 			),
-			"target":  hclspec.NewAttr("target", "string", false),
+			"target":  hclspec.NewAttr("target", "string", true),
 			"source":  hclspec.NewAttr("source", "string", false),
 			"options": hclspec.NewAttr("options", "list(string)", false),
 		})),
