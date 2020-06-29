@@ -74,6 +74,7 @@ var (
 		"args":            hclspec.NewAttr("args", "list(string)", false),
 		"cap_add":         hclspec.NewAttr("cap_add", "list(string)", false),
 		"cap_drop":        hclspec.NewAttr("cap_drop", "list(string)", false),
+		"devices":         hclspec.NewAttr("devices", "list(string)", false),
 		"privileged":      hclspec.NewAttr("privileged", "bool", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
 	})
@@ -103,6 +104,7 @@ type TaskConfig struct {
 	Args           []string `codec:"args"`
 	CapAdd         []string `codec:"cap_add"`
 	CapDrop        []string `codec:"cap_drop"`
+	Devices        []string `codec:"devices"`
 	Privileged     bool     `codec:"privileged"`
 	ReadOnlyRootfs bool     `codec:"readonly_rootfs"`
 }

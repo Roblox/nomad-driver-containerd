@@ -56,6 +56,11 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 
 	opts = append(opts, oci.WithEnv(env))
 
+	// Add linux devices into the container.
+	for _, device := range config.Devices {
+		opts = append(opts, oci.WithLinuxDevice(device, "rwm"))
+	}
+
 	return d.client.NewContainer(
 		d.ctxContainerd,
 		containerName,
