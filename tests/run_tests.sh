@@ -18,11 +18,8 @@ PASS_STATUS=0
 # Please don't run these tests (./run_tests.sh) on your local host, as these are meant to be
 # destructive and can modify (or destroy) software on your host system.
 main() {
-	echo "Starting setup."
 	setup
-	echo "Setup finished successfully."
-
-	echo "Checking if nomad-driver-containerd is up and running, and nomad is ready to accept jobs."
+	echo "INFO: Checking if nomad-driver-containerd is up and running, and nomad is ready to accept jobs."
 	is_containerd_driver_active
 
 	run_tests $@
@@ -104,7 +101,7 @@ EOF
 
         sudo mv containerd.service /lib/systemd/system/containerd.service
         sudo systemctl daemon-reload
-        echo "Starting containerd daemon."
+        echo "INFO: Starting containerd daemon."
         sudo systemctl start containerd
 	is_systemd_service_active "containerd.service"
 
@@ -124,7 +121,7 @@ EOF
 	sudo chmod +x /usr/local/bin/nomad
 	rm -f nomad_${NOMAD_VERSION}_linux_amd64.zip
 
-	echo "Building nomad-driver-containerd."
+	echo "INFO: Building nomad-driver-containerd."
 	cd ~/go/src/github.com/Roblox/nomad-driver-containerd
 	make build
 	echo "move containerd-driver to /tmp/nomad-driver-containerd."
@@ -153,7 +150,7 @@ WantedBy=multi-user.target
 EOF
 	sudo mv nomad.service /lib/systemd/system/nomad.service
 	sudo systemctl daemon-reload
-	echo "Starting nomad server and nomad-driver-containerd."
+	echo "INFO: Starting nomad server and nomad-driver-containerd."
 	sudo systemctl start nomad
 	is_systemd_service_active "nomad.service"
 	popd
@@ -168,16 +165,16 @@ is_containerd_driver_active() {
 		rc=$?
 		set -e
 		if [[ $rc -eq 0 && $status = "true" ]]; then
-			echo "containerd driver is up and running."
+			echo "INFO: containerd driver is up and running."
 			break
 		fi
-		echo "containerd driver is down, sleep for 3 seconds."
+		echo "INFO: containerd driver is down, sleep for 3 seconds."
 		sleep 3s
 		i=$[$i+1]
 	done
 
 	if [ $i -ge 5 ]; then
-		echo "containerd driver didn't come up. exit 1."
+		echo "ERROR: containerd driver didn't come up. exit 1."
 		exit 1
 	fi
 }
@@ -186,16 +183,16 @@ is_systemd_service_active() {
 	local service_name=$1
 	i="0"
 	while test $i -lt 5 && !(systemctl -q is-active "$service_name"); do
-		printf "%s is down, sleep for 3 seconds.\n" $service_name
+		printf "INFO: %s is down, sleep for 3 seconds.\n" $service_name
 		sleep 3s
 		i=$[$i+1]
 	done
 
 	if [ $i -ge 5 ]; then
-		printf "%s didn't come up. exit 1.\n" $service_name
+		printf "ERROR: %s didn't come up. exit 1.\n" $service_name
 		exit 1
 	fi
-	printf "%s is up and running\n" $service_name
+	printf "INFO: %s is up and running\n" $service_name
 }
 
 main "$@"
