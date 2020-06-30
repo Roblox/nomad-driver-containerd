@@ -39,6 +39,9 @@ test_redis_nomad_job() {
         echo "ERROR: Error in stopping redis job."
         exit 1
     fi
+
+    echo "INFO: purge nomad redis job."
+    nomad job stop -purge redis
     popd
 }
 
@@ -51,8 +54,8 @@ is_redis_container_active() {
                         echo "INFO: redis container is up and running"
                         break
                 fi
-                echo "INFO: redis container is down, sleep for 3 seconds."
-                sleep 3s
+                echo "INFO: redis container is down, sleep for 4 seconds."
+                sleep 4s
                 i=$[$i+1]
         done
 

@@ -27,6 +27,9 @@ test_signal_handler_nomad_job() {
         echo "ERROR: Error in stopping signal handler job."
         exit 1
     fi
+
+    echo "INFO: purge nomad signal handler job."
+    nomad job stop -purge signal
     popd
 }
 

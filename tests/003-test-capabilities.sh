@@ -39,7 +39,7 @@ test_capabilities_nomad_job() {
 
     # Check if CAP_SYS_ADMIN was added.
     echo "INFO: Checking if CAP_SYS_ADMIN is added."
-    nomad alloc exec -job capabilities capsh --print|grep cap_sys_admin 2>&1 >/dev/null
+    nomad alloc exec -job capabilities capsh --print|grep cap_sys_admin >/dev/null 2>&1
     rc=$?
     if [ $rc -ne 0 ]; then
         echo "ERROR: CAP_SYS_ADMIN was not added to the capabilities set."
@@ -48,7 +48,7 @@ test_capabilities_nomad_job() {
 
     # Check if CAP_CHOWN was dropped.
     echo "INFO: Checking if CAP_CHOWN is dropped."
-    nomad alloc exec -job capabilities capsh --print|grep cap_chown 2>&1 >/dev/null
+    nomad alloc exec -job capabilities capsh --print|grep cap_chown >/dev/null 2>&1
     rc=$?
     if [ $rc -eq 0 ]; then
         echo "ERROR: CAP_CHOWN was not dropped from the capabilities set."
@@ -62,6 +62,9 @@ test_capabilities_nomad_job() {
         echo "ERROR: Error in stopping capabilities job."
         exit 1
     fi
+
+    echo "INFO: purge nomad capabilities job."
+    nomad job stop -purge capabilities
     popd
 }
 
@@ -79,8 +82,8 @@ is_capabilities_container_active() {
                         echo "INFO: capabilities container is up and running"
                         break
                 fi
-                echo "INFO: capabilities container is down, sleep for 3 seconds."
-                sleep 3s
+                echo "INFO: capabilities container is down, sleep for 4 seconds."
+                sleep 4s
                 i=$[$i+1]
         done
 
