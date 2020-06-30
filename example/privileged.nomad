@@ -9,7 +9,7 @@ job "privileged" {
         image           = "docker.io/library/ubuntu:16.04"
         command         = "sleep"
         args            = ["600s"]
-	privileged      = true
+        privileged      = true
         devices         = [
             "/dev/loop0",
             "/dev/loop1"

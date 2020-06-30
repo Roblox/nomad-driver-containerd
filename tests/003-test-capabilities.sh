@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# readonly_rootfs, cap_add and cap_drop flags are tested as part of this test.
 test_capabilities_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 

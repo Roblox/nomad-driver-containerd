@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# privileged mode, devices and mounts are tested as part of this test.
 test_privileged_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 
@@ -29,6 +30,7 @@ test_privileged_nomad_job() {
     fi
 
     # Check if container is running in privileged mode.
+    echo "INFO: Checking if container is running in privileged mode."
     expected_capabilities="37"
     actual_capabilities=$(nomad alloc exec -job privileged capsh --print|grep -i bounding|cut -d '=' -f 2|awk '{split($0,a,","); print a[length(a)]}')
     if [ "$expected_capabilities" != "$actual_capabilities" ]; then
