@@ -37,6 +37,24 @@ test_capabilities_nomad_job() {
     fi
     cleanup "$outfile"
 
+    # Check if CAP_SYS_ADMIN was added.
+    echo "INFO: Checking if CAP_SYS_ADMIN is added."
+    nomad alloc exec -job capabilities capsh --print|grep cap_sys_admin 2>&1 >/dev/null
+    rc=$?
+    if [ $rc -ne 0 ]; then
+        echo "ERROR: CAP_SYS_ADMIN was not added to the capabilities set."
+        exit 1
+    fi
+
+    # Check if CAP_CHOWN was dropped.
+    echo "INFO: Checking if CAP_CHOWN is dropped."
+    nomad alloc exec -job capabilities capsh --print|grep cap_chown 2>&1 >/dev/null
+    rc=$?
+    if [ $rc -eq 0 ]; then
+        echo "ERROR: CAP_CHOWN was not dropped from the capabilities set."
+        exit 1
+    fi
+
     echo "INFO: Stopping nomad capabilities job."
     nomad job stop capabilities
     cap_status=$(nomad job status -short capabilities|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
