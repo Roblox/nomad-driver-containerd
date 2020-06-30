@@ -43,7 +43,6 @@ test_redis_nomad_job() {
 }
 
 is_redis_container_active() {
-        set +e
         i="0"
         while test $i -lt 5
         do
@@ -56,7 +55,6 @@ is_redis_container_active() {
                 sleep 3s
                 i=$[$i+1]
         done
-        set -e
 
         if [ $i -ge 5 ]; then
                 echo "ERROR: redis container didn't come up. exit 1."
