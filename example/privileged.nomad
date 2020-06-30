@@ -17,8 +17,8 @@ job "privileged" {
         mounts = [
            {
                 type = "bind"
-                target = "/target/t1"
-                source = "/tmp/t1"
+                target = "/tmp/t1"
+                source = "/tmp/s1"
                 options = ["rbind", "ro"]
            }
         ]

@@ -28,9 +28,17 @@ test_privileged_nomad_job() {
         exit 1
     fi
 
+    # Check if container is running in privileged mode.
+    expected_capabilities="37"
+    actual_capabilities=$(nomad alloc exec -job privileged capsh --print|grep -i bounding|cut -d '=' -f 2|awk '{split($0,a,","); print a[length(a)]}')
+    if [ "$expected_capabilities" != "$actual_capabilities" ]; then
+       echo "ERROR: container is not running in privileged mode."
+       exit 1
+    fi
+
     # Check if bind mount exists.
     echo "INFO: Checking if bind mount exists."
-    output=$(nomad alloc exec -job privileged cat /target/t1/bind.txt)
+    output=$(nomad alloc exec -job privileged cat /tmp/t1/bind.txt)
     if [ "$output" != "hello" ]; then
        echo "ERROR: bind mount does not exist in container rootfs."
        exit 1
@@ -59,8 +67,8 @@ test_privileged_nomad_job() {
 }
 
 setup_bind_source() {
-    mkdir -p /tmp/t1
-    echo hello > /tmp/t1/bind.txt
+    mkdir -p /tmp/s1
+    echo hello > /tmp/s1/bind.txt
 }
 
 is_privileged_container_active() {
