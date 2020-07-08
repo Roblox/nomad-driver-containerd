@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -eo pipefail
 
 export NOMAD_VERSION=0.11.2
 export CONTAINERD_VERSION=1.3.4
@@ -18,6 +18,7 @@ PASS_STATUS=0
 # Please don't run these tests (./run_tests.sh) on your local host, as these are meant to be
 # destructive and can modify (or destroy) software on your host system.
 main() {
+	warn_on_local_host
 	setup
 	echo "INFO: Checking if nomad-driver-containerd is up and running, and nomad is ready to accept jobs."
 	is_containerd_driver_active
@@ -50,6 +51,20 @@ run_tests() {
   for t in $files;do
     run_test ./$t
   done
+}
+
+warn_on_local_host() {
+  if [[ -z "$CIRCLECI" || "$CIRCLECI" != "true" ]]; then
+     echo "WARNING: Local host detected."
+     echo "WARNING: These tests are designed to be run as part of continous integration (CI) and not recommended to be run on local host."
+     echo "WARNING: These tests are destructive and can modify (or destroy) software on your host system."
+     read -p "Do you still want to run the tests (Y/N)? " -n 1 -r
+     echo
+     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Right choice! Aborting..."
+        exit 0
+     fi
+  fi
 }
 
 setup() {
