@@ -9,81 +9,47 @@ export PATH=$PATH:/usr/local/bin
 export GOPATH=/home/circleci/go
 export GO_VERSION=1.14.3
 
+# Keeps track of overall pass/failure status of tests. Even if single test
+# fails, PASS_STATUS will be set to 1 and returned to caller when all
+# tests have run.
+PASS_STATUS=0
+
 # These tests are designed to be run as part of continous integration (CI) and not on local host.
 # Please don't run these tests (./run_tests.sh) on your local host, as these are meant to be
 # destructive and can modify (or destroy) software on your host system.
 main() {
-	echo "Starting setup."
 	setup
-	echo "Setup finished successfully."
-
-	echo "Checking if nomad-driver-containerd is up and running, and nomad is ready to accept jobs."
+	echo "INFO: Checking if nomad-driver-containerd is up and running, and nomad is ready to accept jobs."
 	is_containerd_driver_active
 
-	cd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
+	run_tests $@
+	exit $PASS_STATUS
+}
 
-	echo "Starting nomad redis job using nomad-driver-containerd."
-	nomad job run redis.nomad
+run_test () {
+  testfile=$1
 
-	echo "Starting nomad signal handler job using nomad-driver-containerd."
-	nomad job run signal.nomad
+  echo "INFO: Running test `basename $testfile`"
+  bash -c $testfile
 
-	echo "Checking status of redis job."
-	redis_status=$(nomad job status -short redis|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
-	if [ $redis_status != "running" ];then
-		echo "Error in getting redis job status."
-		exit 1
-	fi
-	# Even though $(nomad job status) reports redis job status as "running"
-	# The actual container process might not be running yet.
-	# We need to wait for actual container to start running before trying exec.
-	echo "Wait for redis container to get into RUNNING state, before trying exec."
-	is_redis_container_active
+  if [ $? -eq 0 ];then
+    echo "PASS: $(basename $testfile)"
+  else
+    echo "FAIL: $(basename $testfile)"
+    PASS_STATUS=1
+  fi
+}
 
-	echo "Checking status of signal handler job."
-	signal_status=$(nomad job status -short signal|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
-        if [ $signal_status != "running" ];then
-		echo "Error in getting signal handler job status."
-		exit 1
-	fi
-
-	echo "Inspecting redis job."
-	redis_status=$(nomad job inspect redis|jq -r '.Job .Status')
-	if [ $redis_status != "running" ];then
-		echo "Error in inspecting redis job."
-		exit 1
-	fi
-
-	echo "Inspecting signal handler job."
-	signal_status=$(nomad job inspect signal|jq -r '.Job .Status')
-	if [ $signal_status != "running" ]; then
-		echo "Error in inspecting signal handler job."
-		exit 1
-	fi
-
-	echo "Exec redis job."
-	exec_output=$(nomad alloc exec -job redis echo hello_exec)
-	if [ $exec_output != "hello_exec" ]; then
-		echo "Error in exec'ing redis job."
-		exit 1
-	fi
-
-	echo "Stopping nomad redis job."
-	nomad job stop redis
-	redis_status=$(nomad job status -short redis|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
-	if [ $redis_status != "dead(stopped)" ];then
-		echo "Error in stopping redis job."
-		exit 1
-	fi
-
-	echo "Stopping nomad signal handler job."
-	nomad job stop signal
-	signal_status=$(nomad job status -short signal|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
-        if [ $signal_status != "dead(stopped)" ];then
-                echo "Error in stopping signal handler job."
-                exit 1
-        fi
-	echo "Tests finished successfully."
+run_tests() {
+  local srcdir=`dirname $0`
+  if [ $# -gt 0 ]; then
+    local files=$@
+  else
+    local files="$srcdir/[0-9][0-9][0-9]-test-*"
+  fi
+  for t in $files;do
+    run_test ./$t
+  done
 }
 
 setup() {
@@ -102,7 +68,7 @@ setup() {
 	sudo apt-get install -y apt-utils curl runc unzip make build-essential
 
 	# Change $(pwd) to /tmp
-	cd /tmp
+	pushd /tmp
 
 	# Install containerd 1.3.4
 	curl -L -o containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
@@ -135,7 +101,7 @@ EOF
 
         sudo mv containerd.service /lib/systemd/system/containerd.service
         sudo systemctl daemon-reload
-        echo "Starting containerd daemon."
+        echo "INFO: Starting containerd daemon."
         sudo systemctl start containerd
 	is_systemd_service_active "containerd.service"
 
@@ -155,7 +121,7 @@ EOF
 	sudo chmod +x /usr/local/bin/nomad
 	rm -f nomad_${NOMAD_VERSION}_linux_amd64.zip
 
-	echo "Building nomad-driver-containerd."
+	echo "INFO: Building nomad-driver-containerd."
 	cd ~/go/src/github.com/Roblox/nomad-driver-containerd
 	make build
 	echo "move containerd-driver to /tmp/nomad-driver-containerd."
@@ -184,9 +150,10 @@ WantedBy=multi-user.target
 EOF
 	sudo mv nomad.service /lib/systemd/system/nomad.service
 	sudo systemctl daemon-reload
-	echo "Starting nomad server and nomad-driver-containerd."
+	echo "INFO: Starting nomad server and nomad-driver-containerd."
 	sudo systemctl start nomad
 	is_systemd_service_active "nomad.service"
+	popd
 }
 
 is_containerd_driver_active() {
@@ -198,38 +165,16 @@ is_containerd_driver_active() {
 		rc=$?
 		set -e
 		if [[ $rc -eq 0 && $status = "true" ]]; then
-			echo "containerd driver is up and running."
+			echo "INFO: containerd driver is up and running."
 			break
 		fi
-		echo "containerd driver is down, sleep for 3 seconds."
-		sleep 3s
+		echo "INFO: containerd driver is down, sleep for 4 seconds."
+		sleep 4s
 		i=$[$i+1]
 	done
 
 	if [ $i -ge 5 ]; then
-		echo "containerd driver didn't come up. exit 1."
-		exit 1
-	fi
-}
-
-is_redis_container_active() {
-	set +e
-	i="0"
-	while test $i -lt 5
-	do
-		sudo CONTAINERD_NAMESPACE=nomad ctr task ls|grep -q RUNNING
-		if [ $? -eq 0 ]; then
-			echo "redis container is up and running"
-			break
-		fi
-		echo "redis container is down, sleep for 3 seconds."
-		sleep 3s
-		i=$[$i+1]
-	done
-	set -e
-
-	if [ $i -ge 5 ]; then
-		echo "redis container didn't come up. exit 1."
+		echo "ERROR: containerd driver didn't come up. exit 1."
 		exit 1
 	fi
 }
@@ -238,16 +183,16 @@ is_systemd_service_active() {
 	local service_name=$1
 	i="0"
 	while test $i -lt 5 && !(systemctl -q is-active "$service_name"); do
-		printf "%s is down, sleep for 3 seconds.\n" $service_name
-		sleep 3s
+		printf "INFO: %s is down, sleep for 4 seconds.\n" $service_name
+		sleep 4s
 		i=$[$i+1]
 	done
 
 	if [ $i -ge 5 ]; then
-		printf "%s didn't come up. exit 1.\n" $service_name
+		printf "ERROR: %s didn't come up. exit 1.\n" $service_name
 		exit 1
 	fi
-	printf "%s is up and running\n" $service_name
+	printf "INFO: %s is up and running\n" $service_name
 }
 
 main "$@"

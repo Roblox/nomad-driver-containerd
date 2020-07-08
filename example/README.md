@@ -24,9 +24,8 @@ $ nomad alloc exec -i -t <allocation_id> /bin/sh
 ```
 $ nomad job run signal.nomad
 ```
-will start the signal handler container. You can send any signal
-[(from a list of supported signals)](https://github.com/hashicorp/consul-template/blob/master/signals/signals_unix.go)
-to this container and it will print the signal on `stdout` for you.
+will start the signal handler container.<br/>
+You can send any signal [(from a list of supported signals)](https://github.com/hashicorp/consul-template/blob/master/signals/signals_unix.go) to this container and it will print the signal on `stdout` for you.
 
 ```
 $ nomad job status signal
@@ -42,7 +41,8 @@ $ nomad alloc signal -s <signal> <allocation_id>
 ```
 $ nomad job run stress.nomad
 ```
-will start a stress test container. This container is based on linux `stress-ng` tool which is used for generating
+will start a stress test container.<br/>
+This container is based on linux `stress-ng` tool which is used for generating
 heavy load on CPU and memory to do stress testing.
 
 This container executes the following command as an entrypoint to the container:
@@ -66,8 +66,9 @@ $ nomad alloc status -stats <allocation_id>
 ```
 $ nomad job run capabilities.nomad
 ```
-will start an `ubuntu:16.04` container using `nomad-driver-containerd`.
-This container sleeps for 10 mins (600 seconds) and add (and drop) the following capabilities.
+will start an `ubuntu:16.04` container using `nomad-driver-containerd`.<br/>
+This container sleeps for 10 mins (600 seconds), runs in `readonly` mode and
+add (and drop) the following capabilities.
 
 **New capabilities added:**
 ```
@@ -94,4 +95,53 @@ $ nomad alloc exec -i -t <allocation_id> /bin/bash
 Print capabilities (Inside the container)
 ```
 $ capsh --print
+```
+Check readonly mode (Inside the container)
+```
+$ touch /tmp/file.txt
+```
+`touch` should throw the following error message:
+```
+touch: cannot touch '/tmp/file.txt': Read-only file system
+```
+
+## Privileged
+
+```
+$ nomad job run privileged.nomad
+```
+will start an `ubuntu:16.04` container using `nomad-driver-containerd`.<br/>
+This container does the following:<br/>
+<ol>
+<li>Sleeps for 10 mins (600 seconds).</li>
+<li>Runs in privileged mode i.e the bounding set contains all linux capabilities.</li>
+<li>Add /dev/loop0 and /dev/loop1 loopback devices into the container.</li>
+<li>Bind mounts /tmp/s1 (host) to /tmp/t1 (container).</li>
+</ol>
+
+**Exec into privileged container to check capabilities, devices and mounts.**
+
+```
+$ nomad job status privileged
+```
+Copy the allocation ID from the output of `nomad job status` command.
+
+```
+$ nomad alloc exec -i -t <allocation_id> /bin/bash
+```
+Print capabilities (Inside the container)
+```
+$ capsh --print
+```
+This should print all 37 capabilities as part of the bounding set.<br/>
+
+Check for devices (Inside the container)
+```
+ls /dev -lt
+```
+This should list both `/dev/loop0` and `/dev/loop1` under devices.<br/>
+
+Check bind mount (Inside the container)
+```
+mountpoint /tmp/t1
 ```
