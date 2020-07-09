@@ -60,13 +60,29 @@ $ sudo systemctl daemon-reload
 $ sudo systemctl start containerd
 $ sudo systemctl status containerd
 ```
-## Setup
+## Building (and installing) nomad-driver-containerd
 ```
 $ mkdir -p $GOPATH/src/github.com/Roblox
 $ cd $GOPATH/src/github.com/Roblox
 $ git clone git@github.com:Roblox/nomad-driver-containerd.git
 $ cd nomad-driver-containerd
 $ make build (This will build your containerd-driver binary)
+$ mkdir -p /tmp/nomad-driver-containerd
+$ cd /tmp/nomad-driver-containerd
+$ ln -s $GOPATH/src/github.com/Roblox/nomad-driver-containerd/containerd-driver containerd-driver
+```
+
+You can now start nomad dev server + nomad-driver-containerd using the following command:
+
+```
+$ cd $GOPATH/src/github.com/Roblox/nomad-driver-containerd/example
+$ nomad agent -dev -config=agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
+```
+
+Once the nomad server is up and running, you can check the registered task drivers (which will also show nomad-driver-containerd) using:
+
+```
+$ nomad node status <nodeid>
 ```
 
 ## Tests
@@ -76,3 +92,9 @@ $ make test
 **NOTE**: These are destructive tests and can leave the system in a changed state.<br/>
 It is highly recommended to run these tests either as part of a CI/CD system or on
 a immutable infrastructure e.g VMs.
+
+## Cleanup
+```
+make clean
+``` 
+This will delete your binary: containerd-driver.
