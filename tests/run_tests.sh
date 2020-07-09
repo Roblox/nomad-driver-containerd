@@ -92,7 +92,7 @@ setup() {
 
 	# Drop containerd systemd unit file into /lib/systemd/system.
 	cat << EOF > containerd.service
-# /lib/systemd/system/nomad.service
+# /lib/systemd/system/containerd.service
 [Unit]
 Description=containerd container runtime
 Documentation=https://containerd.io
