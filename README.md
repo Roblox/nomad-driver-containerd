@@ -60,30 +60,40 @@ $ sudo systemctl daemon-reload
 $ sudo systemctl start containerd
 $ sudo systemctl status containerd
 ```
-## Building (and installing) nomad-driver-containerd
+## Building nomad-driver-containerd
 ```
 $ mkdir -p $GOPATH/src/github.com/Roblox
 $ cd $GOPATH/src/github.com/Roblox
 $ git clone git@github.com:Roblox/nomad-driver-containerd.git
 $ cd nomad-driver-containerd
 $ make build (This will build your containerd-driver binary)
+```
+
+### Start a nomad dev server with nomad-driver-containerd task driver
+
+```
 $ mkdir -p /tmp/nomad-driver-containerd
 $ cd /tmp/nomad-driver-containerd
 $ ln -s $GOPATH/src/github.com/Roblox/nomad-driver-containerd/containerd-driver containerd-driver
-```
-
-You can now start nomad dev server + nomad-driver-containerd using the following command:
-
-```
 $ cd $GOPATH/src/github.com/Roblox/nomad-driver-containerd/example
 $ nomad agent -dev -config=agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
 ```
 
-Once the nomad server is up and running, you can check the registered task drivers (which will also show nomad-driver-containerd) using:
+Once the nomad server is up and running, you can check the registered task drivers (which will also show `nomad-driver-containerd`) using:
 
 ```
 $ nomad node status <nodeid>
 ```
+
+## Run Example jobs.
+
+There are few example jobs in the [`example`](https://github.com/Roblox/nomad-driver-containerd/tree/readme/example) directory.
+
+```
+$ nomad job run <job_name.nomad>
+```
+will launch the job, as long as both nomad server (+nomad-driver-containerd) and containerd are running on your system.
+More detailed instructions are in the [`example README.md`](https://github.com/Roblox/nomad-driver-containerd/tree/readme/example)
 
 ## Tests
 ```
