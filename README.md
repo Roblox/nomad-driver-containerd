@@ -22,6 +22,8 @@ Docker daemon is not required on the host system.
 - [Containerd](https://containerd.io/downloads/) >=1.3
 
 ## Building nomad-driver-containerd
+
+Make sure your **$GOPATH** is setup correctly.
 ```
 $ mkdir -p $GOPATH/src/github.com/Roblox
 $ cd $GOPATH/src/github.com/Roblox
@@ -34,9 +36,9 @@ $ make build (This will build your containerd-driver binary)
 ```
 ./setup.sh
 ```
-The setup script will setup containerd 1.3.4 and nomad server + nomad-driver-containerd (nomad server/client should already be installed on your system, and setup.sh only builds the driver) on your system, so you can try out [`example`](https://github.com/Roblox/nomad-driver-containerd/tree/readme/example) jobs.
+The setup script will setup `containerd 1.3.4` and `nomad server+nomad-driver-containerd` (nomad server/client should already be installed on your system, and `setup.sh` only builds the driver) on your system, so you can try out [`example`](https://github.com/Roblox/nomad-driver-containerd/tree/readme/example) jobs.
 
-Once `setup.sh` is complete and the nomad server is up and running, you can check the registered task drivers (which will also show nomad-driver-containerd) using:
+Once `setup.sh` is complete and the nomad server is up and running, you can check the registered task drivers (which will also show `nomad-driver-containerd`) using:
 ```
 $ nomad node status (Note down the <node_id>)
 $ nomad node status <node_id>
@@ -49,8 +51,9 @@ There are few example jobs in the [`example`](https://github.com/Roblox/nomad-dr
 ```
 $ nomad job run <job_name.nomad>
 ```
-will launch the job.
-NOTE: You need to run `setup.sh` before trying out the example jobs.
+will launch the job.<br/>
+
+**NOTE:** You need to run `setup.sh` before trying out the example jobs.<br/>
 More detailed instructions are in the [`example README.md`](https://github.com/Roblox/nomad-driver-containerd/tree/readme/example)
 
 ## Tests
@@ -65,4 +68,4 @@ a immutable infrastructure e.g VMs.
 ```
 make clean
 ``` 
-This will delete your binary: containerd-driver.
+This will delete your binary: `containerd-driver`
