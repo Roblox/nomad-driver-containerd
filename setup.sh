@@ -3,7 +3,6 @@
 set -euo pipefail
 
 export CONTAINERD_VERSION=1.3.4
-export CLEANUP_CONTAINERD=false
 
 main() {
   echo "INFO: Welcome! nomad-driver-containerd setup."
@@ -17,13 +16,22 @@ main() {
   # Save present working directory (pwd).
   curr_dir=$(echo $PWD)
 
-  # Skip installing containerd if already present.
-  if ! systemctl -q is-active "containerd.service"; then
-     CLEANUP_CONTAINERD=true
-     setup_containerd
-  else
-     echo "INFO: Containerd detected on the system. Skip installing containerd."
+  if systemctl -q is-active "containerd.service"; then
+     echo "WARN: Containerd detected on the system."
+     read -p "INFO: Backup existing containerd and deploy containerd-${CONTAINERD_VERSION} (Y/N)? Press Y to continue. " -n 1 -r
+     echo
+     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "INFO: Aborting setup..."
+        exit 0
+     fi
+     systemctl stop containerd
+     if [ -f "/lib/systemd/system/containerd.service" ]; then
+        echo "INFO: Backup containerd systemd unit /lib/systemd/system/containerd.service."
+        mv /lib/systemd/system/containerd.service /lib/systemd/system/containerd.service.bkp
+        echo "WARN: Backup file saved at: /lib/systemd/system/containerd.service.bkp"
+     fi
   fi
+  setup_containerd
 
   read -p "INFO: Setup nomad server + nomad-driver-containerd (Y/N)? Press Y to continue. " -n 1 -r
   echo
@@ -55,7 +63,7 @@ main() {
 cleanup() {
   echo "INFO: Starting cleanup."
   pushd $curr_dir >/dev/null 2>&1
-  if [ "$CLEANUP_CONTAINERD" = true ]; then
+  if [ -f "/lib/systemd/system/containerd.service.bkp" ]; then
      if systemctl -q is-active "containerd.service"; then
 	echo "INFO: Stopping containerd."
         systemctl stop containerd.service
