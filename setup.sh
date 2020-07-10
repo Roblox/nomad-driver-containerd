@@ -12,8 +12,12 @@ main() {
   check_nomad
   check_golang
 
+  # Save present working directory (pwd).
+  curr_dir=$(echo $PWD)
+
   # Skip installing containerd if already present.
   if ! systemctl -q is-active "containerd.service"; then
+     CLEANUP_CONTAINERD=true
      setup_containerd
   else
      echo "INFO: Containerd detected on the system. Skip installing containerd."
@@ -33,7 +37,6 @@ main() {
   mkdir -p /tmp/nomad-driver-containerd
   echo "INFO: Move containerd-driver to /tmp/nomad-driver-containerd."
   mv containerd-driver /tmp/nomad-driver-containerd
-  local curr_dir=$(echo $PWD)
   drop_nomad_unit_file $curr_dir
   echo "INFO: Reload nomad.service systemd unit."
   systemctl daemon-reload
@@ -44,6 +47,32 @@ main() {
      exit 1
   fi
   echo "INFO: Setup finished successfully."
+}
+
+cleanup() {
+  echo "INFO: Starting cleanup."
+  pushd $curr_dir
+  if [ "$CLEANUP_CONTAINERD" = true ]; then
+     if systemctl -q is-active "containerd.service"; then
+	echo "INFO: Stopping containerd."
+        systemctl stop containerd.service
+     fi
+
+     if [ -f "/tmp/containerd.service" ]; then
+        echo "INFO: Cleanup /tmp/containerd.service."
+	rm -f /tmp/containerd.service
+     fi
+
+     if [ -f "/lib/systemd/system/containerd.service" ]; then
+        echo "INFO: Cleanup: /lib/systemd/system/containerd.service."
+	rm -f /lib/systemd/system/containerd.service
+     fi
+
+     if [ -f "/tmp/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz" ]; then
+        echo "INFO: Cleanup: /tmp/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz."
+	rm -f /tmp/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
+     fi
+  fi
 }
 
 setup_containerd() {
