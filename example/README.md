@@ -119,6 +119,8 @@ This container does the following:<br/>
 <li>Bind mounts /tmp/s1 (host) to /tmp/t1 (container).</li>
 </ol>
 
+**NOTE**: `/tmp/s1` should exist on the host, before you run **Privileged** job.<br/>
+
 **Exec into privileged container to check capabilities, devices and mounts.**
 
 ```
