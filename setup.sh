@@ -4,6 +4,7 @@ set -euo pipefail
 
 export CONTAINERD_VERSION=1.3.4
 export GOBIN="/usr/local/go/bin/go"
+export CLEANUP_CONTAINERD=false
 
 main() {
   echo "INFO: Welcome! nomad-driver-containerd setup."
