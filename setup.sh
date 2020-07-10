@@ -27,21 +27,22 @@ main() {
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
      echo "Aborting setup..."
+     cleanup
      exit 0
   fi
   echo "INFO: Cleanup any old binaries."
   make clean >/dev/null 2>&1
   echo "INFO: Build nomad-driver-containerd binary: containerd-driver."
-  make build >/dev/null 2>&1
+  make build >/dev/null 2>&1 || (cleanup && exit 1)
   echo "INFO: Create plugin-dir for containerd-driver: /tmp/nomad-driver-containerd."
-  mkdir -p /tmp/nomad-driver-containerd
+  mkdir -p /tmp/nomad-driver-containerd || (cleanup && exit 1)
   echo "INFO: Move containerd-driver to /tmp/nomad-driver-containerd."
-  mv containerd-driver /tmp/nomad-driver-containerd
+  mv containerd-driver /tmp/nomad-driver-containerd || (cleanup && exit 1)
   drop_nomad_unit_file $curr_dir
   echo "INFO: Reload nomad.service systemd unit."
   systemctl daemon-reload
   echo "INFO: Starting nomad server + nomad-driver-containerd."
-  systemctl start nomad
+  systemctl start nomad || (cleanup && exit 1)
   if ! systemctl -q is-active "nomad.service"; then
      echo "ERROR: nomad.service didn't come up. journalctl -u nomad.service for more info."
      exit 1
@@ -73,6 +74,29 @@ cleanup() {
 	rm -f /tmp/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
      fi
   fi
+
+  if systemctl -q is-active "nomad.service"; then
+     echo "INFO: Stopping nomad server+nomad-driver-containerd."
+     systemctl stop nomad
+  fi
+
+  if [ -f "$curr_dir/nomad.service" ]; then
+     echo "INFO: Cleanup $curr_dir/nomad.service."
+     rm -f $curr_dir/nomad.service
+  fi
+
+  if [ -f "/lib/systemd/system/nomad.service" ]; then
+     echo "INFO: Cleanup: /lib/systemd/system/nomad.service."
+     rm -f /lib/systemd/system/nomad.service
+  fi
+
+  echo "INFO: Cleanup /tmp/nomad-driver-containerd."
+  rm -rf /tmp/nomad-driver-containerd
+
+  echo "INFO: Cleanup containerd-driver binary."
+  make clean
+  popd
+  echo "INFO: Cleanup complete."
 }
 
 setup_containerd() {
@@ -80,23 +104,25 @@ setup_containerd() {
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
      echo "Aborting setup..."
+     cleanup
      exit 0
   fi
   pushd /tmp >/dev/null 2>&1
-  curl -L --silent -o containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
-  tar -C /usr/local -xzf containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
+  curl -L --silent -o containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz || (cleanup && exit 1)
+  tar -C /usr/local -xzf containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz || (cleanup && exit 1)
   rm -f containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
   read -p "INFO: Drop systemd unit containerd.service into /lib/systemd/system/containerd.service (Y/N)? Press Y to continue. " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
      echo "Aborting setup..."
+     cleanup
      exit 0
   fi
   drop_containerd_unit_file
   echo "INFO: Reload containerd.service systemd unit."
   systemctl daemon-reload
   echo "INFO: Starting containerd daemon."
-  systemctl start containerd
+  systemctl start containerd || (cleanup && exit 1)
   popd >/dev/null 2>&1
   if ! systemctl -q is-active "containerd.service"; then
      echo "ERROR: containerd.service didn't come up. journalctl -u containerd.service for more info."
