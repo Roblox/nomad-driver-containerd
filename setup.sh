@@ -52,7 +52,7 @@ main() {
 
 cleanup() {
   echo "INFO: Starting cleanup."
-  pushd $curr_dir
+  pushd $curr_dir >/dev/null 2>&1
   if [ "$CLEANUP_CONTAINERD" = true ]; then
      if systemctl -q is-active "containerd.service"; then
 	echo "INFO: Stopping containerd."
@@ -94,8 +94,8 @@ cleanup() {
   rm -rf /tmp/nomad-driver-containerd
 
   echo "INFO: Cleanup containerd-driver binary."
-  make clean
-  popd
+  make clean >/dev/null 2>&1
+  popd >/dev/null 2>&1
   echo "INFO: Cleanup complete."
 }
 
