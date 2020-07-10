@@ -13,6 +13,8 @@ main() {
   check_nomad
   check_golang
 
+  echo "WARN: Some installation steps are time consuming. Please be patient!"
+
   # Save present working directory (pwd).
   curr_dir=$(echo $PWD)
 
@@ -27,7 +29,7 @@ main() {
   read -p "INFO: Setup nomad server + nomad-driver-containerd (Y/N)? Press Y to continue. " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-     echo "Aborting setup..."
+     echo "INFO: Aborting setup..."
      cleanup
      exit 0
   fi
@@ -104,7 +106,7 @@ setup_containerd() {
   read -p "INFO: Download containerd (Y/N)? Press Y to continue. " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-     echo "Aborting setup..."
+     echo "INFO: Aborting setup..."
      cleanup
      exit 0
   fi
@@ -115,7 +117,7 @@ setup_containerd() {
   read -p "INFO: Drop systemd unit containerd.service into /lib/systemd/system/containerd.service (Y/N)? Press Y to continue. " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-     echo "Aborting setup..."
+     echo "INFO: Aborting setup..."
      cleanup
      exit 0
   fi
