@@ -3,7 +3,6 @@
 set -euo pipefail
 
 export CONTAINERD_VERSION=1.3.4
-export GOBIN="/usr/local/go/bin/go"
 export CLEANUP_CONTAINERD=false
 
 main() {
@@ -187,7 +186,7 @@ mv containerd.service /lib/systemd/system/containerd.service
 
 check_golang() {
   set +e
-  stat $GOBIN >/dev/null 2>&1
+  go version >/dev/null 2>&1
   rc=$?
   set -e
   if [ $rc -ne 0 ];then
