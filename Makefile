@@ -1,5 +1,8 @@
 BINARY ?= containerd-driver
-GOLANG ?= /usr/local/go/bin/go
+ifndef $(GOLANG)
+    GOLANG=$(shell which go)
+    export GOLANG
+endif
 
 export GO111MODULE=on
 
