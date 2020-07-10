@@ -38,7 +38,7 @@ $ make build (This will build your containerd-driver binary)
 ```
 The setup script will setup `containerd 1.3.4` and `nomad server+nomad-driver-containerd` (nomad server/client should already be installed on your system, and `setup.sh` only builds the driver) on your system, so you can try out [`example`](https://github.com/Roblox/nomad-driver-containerd/tree/readme/example) jobs.
 
-Once `setup.sh` is complete and the nomad server is up and running, you can check the registered task drivers (which will also show `nomad-driver-containerd`) using:
+Once `setup.sh` is complete and the nomad server is up and running, you can check the registered task drivers (which will also show `containerd-driver`) using:
 ```
 $ nomad node status (Note down the <node_id>)
 $ nomad node status <node_id>
