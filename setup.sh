@@ -148,7 +148,7 @@ drop_nomad_unit_file() {
 [Unit]
 Description=nomad server (dev) + nomad-driver-containerd
 Documentation=https://nomadproject.io
-After=network.target
+After=network.target containerd.service
 
 [Service]
 ExecStart=$nomad agent -dev -config=$1/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
