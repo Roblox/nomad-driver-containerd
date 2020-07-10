@@ -116,8 +116,10 @@ This container does the following:<br/>
 <li>Sleeps for 10 mins (600 seconds).</li>
 <li>Runs in privileged mode i.e the bounding set contains all linux capabilities.</li>
 <li>Add /dev/loop0 and /dev/loop1 loopback devices into the container.</li>
-<li>Bind mounts /tmp/s1 (host) to /tmp/t1 (container). **NOTE**: /tmp/s1 should exist on the host, before you run **Privileged** job.</li>
+<li>Bind mounts /tmp/s1 (host) to /tmp/t1 (container).</li>
 </ol>
+
+**NOTE**: `/tmp/s1` should exist on the host, before you run **Privileged** job.<br/>
 
 **Exec into privileged container to check capabilities, devices and mounts.**
 
