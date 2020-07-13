@@ -63,6 +63,16 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 
 ## Supported options
 
+**Driver Config**
+
+| Option | Type | Required | Default | Description |
+| :---: | :---: | :---: | :---: | :--- |
+| **enabled** | bool | no | true | Enable/Disable task driver. |
+| **containerd_runtime** | string | yes | N/A | Runtime for containerd e.g. `io.containerd.runc.v1` or `io.containerd.runc.v2`. |
+| **stats_interval** | string | no | 1s | Interval for collecting `TaskStats` |
+
+**Task Config**
+
 | Option | Type | Required | Description |
 | :---: | :---: | :---: | :--- |
 | **image** | string | yes | OCI image (docker is also OCI compatible) for your container. |
