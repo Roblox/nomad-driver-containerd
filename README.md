@@ -1,4 +1,6 @@
 # nomad-driver-containerd
+[![CircleCI](https://circleci-github.rcs.simulpong.com/gh/Roblox/nomad-driver-containerd/tree/master.svg?style=shield&circle-token=559609ed9ed99da393798c76f4db004f3cd66801)](https://circleci-github.rcs.simulpong.com/gh/Roblox/nomad-driver-containerd/tree/master)
+
 Nomad task driver for launching containers using containerd.
 
 **Containerd** [`(containerd.io)`](https://containerd.io) is a lightweight container daemon for
