@@ -72,3 +72,9 @@ a immutable infrastructure e.g VMs.
 make clean
 ``` 
 This will delete your binary: `containerd-driver`
+
+## License
+
+Copyright 2020 Roblox Corporation
+
+Licensed under the Apache License, Version 2.0 (the "License"). For more information read the [License](LICENSE).
