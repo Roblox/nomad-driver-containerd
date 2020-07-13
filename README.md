@@ -75,7 +75,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 
 **Mount block**<br/>
        &emsp;&emsp;\{<br/>
-          &emsp;&emsp;&emsp;- **type** (string) (Optional): Supported values are volume, bind or tmpfs. **Default:** volume.<br/>
+          &emsp;&emsp;&emsp;- **type** (string) (Optional): Supported values are `volume`, `bind` or `tmpfs`. **Default:** volume.<br/>
           &emsp;&emsp;&emsp;- **target** (string) (Required): Target path in the container.<br/>
           &emsp;&emsp;&emsp;- **source** (string) (Optional): Source path on the host.<br/>
           &emsp;&emsp;&emsp;- **options** ([]string) (Optional): fstab style [`mount options`](https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L187-L211). **NOTE**: For bind mounts, atleast `rbind` and `ro` are required.<br/>
