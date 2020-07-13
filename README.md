@@ -59,6 +59,40 @@ will launch the job.<br/>
 **NOTE:** You need to run `setup.sh` before trying out the example jobs.<br/>
 More detailed instructions are in the [`example README.md`](https://github.com/Roblox/nomad-driver-containerd/tree/master/example)
 
+## Supported options
+
+| Option | Type | Required | Description |
+| :---: | :---: | :---: | :--- |
+| **image** | string | yes | OCI image (docker is also OCI compatible) for your container. |
+| **command** | string | no | Command to override command defined in the image. |
+| **args** | []string | no | Arguments to the command. |
+| **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
+| **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
+| **cap_add** | []string | no | Add individual capabilities. |
+| **cap_drop** | []string | no | Drop invidual capabilities. |
+| **devices** | []string | no | A list of devices to be exposed to the container. |
+| **mounts** | []block | no | A list of mounts to be mounted in the container. Volume, bind and tmpfs type mounts are supported. fstab style [`mount options`](https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L187-L211) are supported. |
+
+**Mount block**<br/>
+       &emsp;&emsp;\{<br/>
+          &emsp;&emsp;&emsp;- **type** (string) (Optional): Supported values are volume, bind or tmpfs. **Default:** volume.<br/>
+          &emsp;&emsp;&emsp;- **target** (string) (Required): Target path in the container.<br/>
+          &emsp;&emsp;&emsp;- **source** (string) (Optional): Source path on the host.<br/>
+          &emsp;&emsp;&emsp;- **options** ([]string) (Optional): fstab style [`mount options`](https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L187-L211). **NOTE**: For bind mounts, atleast `rbind` and `ro` are required.<br/>
+       &emsp;&emsp;\}
+
+**Bind mount example**
+```
+mounts = [
+           {
+                type    = "bind"
+                target  = "/target/t1"
+                source  = "/src/s1"
+                options = ["rbind", "ro"]
+           }
+        ]
+```
+
 ## Tests
 ```
 $ make test
