@@ -1,5 +1,6 @@
 # nomad-driver-containerd
 [![CircleCI](https://circleci-github.rcs.simulpong.com/gh/Roblox/nomad-driver-containerd/tree/master.svg?style=shield&circle-token=559609ed9ed99da393798c76f4db004f3cd66801)](https://circleci-github.rcs.simulpong.com/gh/Roblox/nomad-driver-containerd/tree/master)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Roblox/nomad-driver-containerd/blob/master/LICENSE)
 
 Nomad task driver for launching containers using containerd.
 
