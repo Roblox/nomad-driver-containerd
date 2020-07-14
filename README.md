@@ -120,6 +120,9 @@ make clean
 ``` 
 This will delete your binary: `containerd-driver`
 
+## Currently supported environments
+Ubuntu (>= 16.04)
+
 ## License
 
 Copyright 2020 Roblox Corporation
