@@ -43,5 +43,9 @@ Vagrant.configure("2") do |config|
        tar -C /usr/local -xzf containerd-1.3.4.linux-amd64.tar.gz
        rm -f containerd-1.3.4.linux-amd64.tar.gz
     fi
+
+    # Run setup
+    cd /home/vagrant/go/src/nomad-driver-containerd/vagrant
+    ./setup.sh
   SHELL
 end
