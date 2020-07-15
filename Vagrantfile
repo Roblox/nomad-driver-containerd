@@ -44,6 +44,9 @@ Vagrant.configure("2") do |config|
        rm -f containerd-1.3.4.linux-amd64.tar.gz
     fi
 
+    # Create source directory for privileged.nomad example job.
+    mkdir -p /tmp/s1
+
     # Run setup
     cd /home/vagrant/go/src/nomad-driver-containerd/vagrant
     ./setup.sh
