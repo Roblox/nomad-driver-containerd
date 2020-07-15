@@ -151,7 +151,7 @@ Documentation=https://nomadproject.io
 After=network.target containerd.service
 
 [Service]
-ExecStart=$nomad agent -dev -config=$1/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
+ExecStart=$nomad agent -dev -bind=0.0.0.0 -config=$1/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
 KillMode=process
 Delegate=yes
 LimitNOFILE=1048576
