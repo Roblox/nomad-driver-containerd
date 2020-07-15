@@ -31,7 +31,7 @@ Vagrant.configure("2") do |config|
 
     # Install nomad-0.11.3
     if [ ! -f "/usr/bin/nomad" ]; then
-      wget --quiet https://releases.hashicorp.com/nomad/0.11.3/nomad_0.11.3_linux_amd64.zip 
+      wget --quiet https://releases.hashicorp.com/nomad/0.11.3/nomad_0.11.3_linux_amd64.zip
       unzip nomad_0.11.3_linux_amd64.zip -d /usr/bin
       chmod +x /usr/bin/nomad
       rm -f nomad_0.11.3_linux_amd64.zip
