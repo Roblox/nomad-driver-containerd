@@ -23,6 +23,8 @@ Docker daemon is not required on the host system.
 - [Nomad](https://www.nomadproject.io/downloads.html) >=v0.11
 - [Go](https://golang.org/doc/install) >=v1.11
 - [Containerd](https://containerd.io/downloads/) >=1.3
+- [Vagrant](https://www.vagrantup.com/downloads.html) >=v2.2
+- [VirtualBox](https://www.virtualbox.org/) v6.0 (or any version vagrant is compatible with)
 
 ## Building nomad-driver-containerd
 
@@ -37,18 +39,17 @@ $ make build (This will build your containerd-driver binary)
 ## Wanna try it out!?
 
 ```
-./setup.sh
+$ vagrant up
 ```
-The setup script will setup `containerd 1.3.4` and `nomad server+nomad-driver-containerd` (nomad server/client should already be installed on your system, and `setup.sh` only builds the driver) on your system, so you can try out [`example`](https://github.com/Roblox/nomad-driver-containerd/tree/master/example) jobs.
+or `vagrant provision` if the vagrant VM is already running.
 
-**NOTE** `setup.sh` overrides your existing `containerd` to `containerd-1.3.4`. This is needed for `io.containerd.runc.v2` runtime.<br/>
-Your original containerd systemd unit file will be backed up at `/lib/systemd/system/containerd.service.bkp` in case you wanna revert later.
-
-Once `setup.sh` is complete and the nomad server is up and running, you can check the registered task drivers (which will also show `containerd-driver`) using:
+Once setup (`vagrant up` OR `vagrant provision`) is complete and the nomad server is up and running, you can check the registered task drivers (which will also show `containerd-driver`) using:
 ```
 $ nomad node status (Note down the <node_id>)
 $ nomad node status <node_id> | grep containerd-driver
 ```
+
+**NOTE:** [`setup.sh`](vagrant/setup.sh) is part of the vagrant setup and should not be executed directly.
 
 ## Run Example jobs.
 
@@ -59,7 +60,6 @@ $ nomad job run <job_name.nomad>
 ```
 will launch the job.<br/>
 
-**NOTE:** You need to run `setup.sh` before trying out the example jobs.<br/>
 More detailed instructions are in the [`example README.md`](https://github.com/Roblox/nomad-driver-containerd/tree/master/example)
 
 ## Supported options
@@ -119,6 +119,11 @@ a immutable infrastructure e.g VMs.
 make clean
 ``` 
 This will delete your binary: `containerd-driver`
+
+```
+vagrant destroy
+```
+This will destroy your vagrant VM.
 
 ## Currently supported environments
 Ubuntu (>= 16.04)
