@@ -60,7 +60,6 @@ $ nomad job run <job_name.nomad>
 ```
 will launch the job.<br/>
 
-**NOTE:** You need to run `setup.sh` before trying out the example jobs.<br/>
 More detailed instructions are in the [`example README.md`](https://github.com/Roblox/nomad-driver-containerd/tree/master/example)
 
 ## Supported options
