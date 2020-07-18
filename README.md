@@ -36,6 +36,10 @@ $ git clone git@github.com:Roblox/nomad-driver-containerd.git
 $ cd nomad-driver-containerd
 $ make build (This will build your containerd-driver binary)
 ```
+
+## Screencast
+[![asciicast](https://asciinema.org/a/348173.svg)](https://asciinema.org/a/348173)
+
 ## Wanna try it out!?
 
 ```
