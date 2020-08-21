@@ -138,13 +138,11 @@ Ubuntu (>= 16.04)
 `nomad-driver-containerd` [`v0.1`](https://github.com/Roblox/nomad-driver-containerd/releases/tag/v0.1) is **not** production ready.
 There are some open items which are currently being worked on.
 
-1) **Logging**: Logging is currently not supported i.e `nomad alloc logs` command won't work out-of-the-box for containers launched using `nomad-driver-containerd`. As a workaround, one can use `containerd` command line tool `ctr` to attach to container `stdout/stderr`. Both the issue and workaround is documented [`here`](https://github.com/Roblox/nomad-driver-containerd/issues/30)
+1) **Networking**: Networking is **not in scope** of containerd as described [`here`](https://kubernetes.io/blog/2017/11/containerd-container-runtime-options-kubernetes/). However an external CNI plugin can be used to add networking to the container. We are researching on how to enable networking for our internal use-cases, and would publish (open-source) that work at some point.
 
-2) **Networking**: Networking is **not in scope** of containerd as described [`here`](https://kubernetes.io/blog/2017/11/containerd-container-runtime-options-kubernetes/). However an external CNI plugin can be used to add networking to the container. We are researching on how to enable networking for our internal use-cases, and would publish (open-source) that work at some point.
+2) **Port forwarding**: The ability to map a host port to a container port. This is currently not supported, but could be supported in future.
 
-3) **Port forwarding**: The ability to map a host port to a container port. This is currently not supported, but could be supported in future.
-
-4) **Consul connect**: When a user launches a job in `nomad`, s/he can add a [`service stanza`](https://www.nomadproject.io/docs/job-specification/service) which will instruct `nomad` to register the service with `consul` for service discovery. This is currently not supported.
+3) **Consul connect**: When a user launches a job in `nomad`, s/he can add a [`service stanza`](https://www.nomadproject.io/docs/job-specification/service) which will instruct `nomad` to register the service with `consul` for service discovery. This is currently not supported.
 
 ## License
 
