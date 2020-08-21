@@ -359,7 +359,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 
 	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s", containerName))
 
-	task, err := d.createTask(container)
+	task, err := d.createTask(container, cfg.StdoutPath, cfg.StderrPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating task: %v", err)
 	}

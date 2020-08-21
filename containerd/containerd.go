@@ -19,6 +19,8 @@ package containerd
 
 import (
 	"fmt"
+	"os"
+	"syscall"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -120,8 +122,24 @@ func (d *Driver) loadContainer(id string) (containerd.Container, error) {
 	return d.client.LoadContainer(d.ctxContainerd, id)
 }
 
-func (d *Driver) createTask(container containerd.Container) (containerd.Task, error) {
-	return container.NewTask(d.ctxContainerd, cio.NewCreator(cio.WithStdio))
+func (d *Driver) createTask(container containerd.Container, stdoutPath, stderrPath string) (containerd.Task, error) {
+	stdout, err := openFIFO(stdoutPath)
+	if err != nil {
+		return nil, err
+	}
+
+	stderr, err := openFIFO(stderrPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return container.NewTask(d.ctxContainerd, cio.NewCreator(cio.WithStreams(nil, stdout, stderr)))
+}
+
+// FIFO's are named pipes in linux.
+// openFIFO() opens the nomad task stdout/stderr pipes and returns the fd.
+func openFIFO(path string) (*os.File, error) {
+	return os.OpenFile(path, os.O_RDWR|syscall.O_NONBLOCK, 0600)
 }
 
 func (d *Driver) getTask(container containerd.Container) (containerd.Task, error) {
