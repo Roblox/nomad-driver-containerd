@@ -70,6 +70,13 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 		opts = append(opts, oci.WithRootFSReadonly())
 	}
 
+	// Enable host network.
+	// WithHostHostsFile bind-mounts the host's /etc/hosts into the container as readonly.
+	// WithHostResolvconf bind-mounts the host's /etc/resolv.conf into the container as readonly.
+	if config.HostNetwork {
+		opts = append(opts, oci.WithHostNamespace(specs.NetworkNamespace), oci.WithHostHostsFile, oci.WithHostResolvconf)
+	}
+
 	// Add capabilities.
 	if len(config.CapAdd) > 0 {
 		opts = append(opts, oci.WithAddedCapabilities(config.CapAdd))

@@ -94,6 +94,7 @@ var (
 		"devices":         hclspec.NewAttr("devices", "list(string)", false),
 		"privileged":      hclspec.NewAttr("privileged", "bool", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
+		"host_network":    hclspec.NewAttr("host_network", "bool", false),
 		"mounts": hclspec.NewBlockList("mounts", hclspec.NewObject(map[string]*hclspec.Spec{
 			"type": hclspec.NewDefault(
 				hclspec.NewAttr("type", "string", false),
@@ -142,6 +143,7 @@ type TaskConfig struct {
 	Devices        []string `codec:"devices"`
 	Privileged     bool     `codec:"privileged"`
 	ReadOnlyRootfs bool     `codec:"readonly_rootfs"`
+	HostNetwork    bool     `codec:"host_network"`
 	Mounts         []Mount  `codec:"mounts"`
 }
 
