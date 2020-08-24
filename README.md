@@ -86,6 +86,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **args** | []string | no | Arguments to the command. |
 | **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
 | **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
+| **host_network** | bool | no | Enable host network. This is equivalent to `--net=host` in docker. |
 | **cap_add** | []string | no | Add individual capabilities. |
 | **cap_drop** | []string | no | Drop invidual capabilities. |
 | **devices** | []string | no | A list of devices to be exposed to the container. |
