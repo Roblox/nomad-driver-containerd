@@ -110,9 +110,10 @@ var (
 	// this should be set according to the target run time.
 	// https://godoc.org/github.com/hashicorp/nomad/plugins/drivers#Capabilities
 	capabilities = &drivers.Capabilities{
-		SendSignals: true,
-		Exec:        true,
-		FSIsolation: drivers.FSIsolationNone,
+		SendSignals:       true,
+		Exec:              true,
+		FSIsolation:       drivers.FSIsolationNone,
+		NetIsolationModes: []drivers.NetIsolationMode{drivers.NetIsolationModeGroup, drivers.NetIsolationModeTask},
 	}
 )
 
@@ -333,6 +334,10 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("failed to decode driver config: %v", err)
 	}
 
+	if driverConfig.HostNetwork && cfg.NetworkIsolation != nil {
+		return nil, nil, fmt.Errorf("host_network and bridge network mode are mutually exclusive, and only one of them should be set")
+	}
+
 	d.logger.Info("starting task", "driver_cfg", hclog.Fmt("%+v", driverConfig))
 	handle := drivers.NewTaskHandle(taskHandleVersion)
 	handle.Config = cfg
@@ -355,13 +360,17 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 
 	containerSnapshotName := fmt.Sprintf("%s-snapshot", containerName)
-	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, env, &driverConfig)
+	var networkNamespacePath string
+	if cfg.NetworkIsolation != nil && cfg.NetworkIsolation.Path != "" {
+		networkNamespacePath = cfg.NetworkIsolation.Path
+	}
+
+	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, networkNamespacePath, env, &driverConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
 
 	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s", containerName))
-
 	task, err := d.createTask(container, cfg.StdoutPath, cfg.StderrPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating task: %v", err)

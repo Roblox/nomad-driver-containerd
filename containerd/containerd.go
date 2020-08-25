@@ -41,7 +41,7 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
 }
 
-func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime string, env []string, config *TaskConfig) (containerd.Container, error) {
+func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, networkNamespacePath string, env []string, config *TaskConfig) (containerd.Container, error) {
 	if config.Command == "" && len(config.Args) > 0 {
 		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
 	}
@@ -121,6 +121,10 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 
 	if len(mounts) > 0 {
 		opts = append(opts, oci.WithMounts(mounts))
+	}
+
+	if networkNamespacePath != "" {
+		opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{Type: specs.NetworkNamespace, Path: networkNamespacePath}))
 	}
 
 	return d.client.NewContainer(
