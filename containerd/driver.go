@@ -20,7 +20,6 @@ package containerd
 import (
 	"context"
 	"fmt"
-	"os"
 	"syscall"
 	"time"
 
@@ -583,13 +582,11 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 	// The given signal will be forwarded to the target taskID.
 	// Please checkout https://github.com/hashicorp/consul-template/blob/master/signals/signals_unix.go
 	// for a list of supported signals.
-	sig := os.Interrupt
-	if s, ok := signals.SignalLookup[signal]; ok {
-		sig = s
-	} else {
-		d.logger.Warn("unknown signal to send to task, using SIGINT instead", "signal", signal, "task_id", handle.taskConfig.ID)
-
+	sig, ok := signals.SignalLookup[signal]
+	if !ok {
+		return fmt.Errorf("Invalid signal: %s", signal)
 	}
+
 	return handle.signal(d.ctxContainerd, sig)
 }
 
