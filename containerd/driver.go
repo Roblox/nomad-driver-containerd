@@ -360,12 +360,12 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 
 	containerSnapshotName := fmt.Sprintf("%s-snapshot", containerName)
-	var networkNamespacePath string
+	var netnsPath string
 	if cfg.NetworkIsolation != nil && cfg.NetworkIsolation.Path != "" {
-		networkNamespacePath = cfg.NetworkIsolation.Path
+		netnsPath = cfg.NetworkIsolation.Path
 	}
 
-	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, networkNamespacePath, env, &driverConfig)
+	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, netnsPath, env, &driverConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
