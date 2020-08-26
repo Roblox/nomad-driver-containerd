@@ -113,6 +113,29 @@ mounts = [
         ]
 ```
 
+## Networking
+
+`nomad-driver-containerd` supports **host** and **bridge** networks.<br/>
+
+**NOTE:** `host` and `bridge` are mutually exclusive options, and only one of them should be used at a time.
+
+1. **Host** network can be enabled by setting `host_network` to `true` in task config
+of the job spec [Check under [`Supported options`](https://github.com/Roblox/nomad-driver-containerd#supported-options)].
+
+2. **Bridge** network can be enabled by setting the `network` stanza in the task group section of the job spec.
+
+```
+network {
+  mode = "bridge"
+}
+```
+You need to install CNI plugins on nomad client nodes under `/opt/cni/bin` before you can use `bridge` networks.
+
+  **Instructions for installing CNI plugins.**<br/>
+ - $ curl -L -o cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.1/cni-plugins-linux-amd64-v0.8.1.tgz<br/>
+ - sudo mkdir -p /opt/cni/bin<br/>
+ - sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
+
 ## Tests
 ```
 $ make test
@@ -140,11 +163,9 @@ Ubuntu (>= 16.04)
 `nomad-driver-containerd` [`v0.1`](https://github.com/Roblox/nomad-driver-containerd/releases/tag/v0.1) is **not** production ready.
 There are some open items which are currently being worked on.
 
-1) **Networking**: Networking is **not in scope** of containerd as described [`here`](https://kubernetes.io/blog/2017/11/containerd-container-runtime-options-kubernetes/). However an external CNI plugin can be used to add networking to the container. We are researching on how to enable networking for our internal use-cases, and would publish (open-source) that work at some point.
+1) **Port forwarding**: The ability to map a host port to a container port. This is currently not supported, but could be supported in future.
 
-2) **Port forwarding**: The ability to map a host port to a container port. This is currently not supported, but could be supported in future.
-
-3) **Consul connect**: When a user launches a job in `nomad`, s/he can add a [`service stanza`](https://www.nomadproject.io/docs/job-specification/service) which will instruct `nomad` to register the service with `consul` for service discovery. This is currently not supported.
+2) **Consul connect**: When a user launches a job in `nomad`, s/he can add a [`service stanza`](https://www.nomadproject.io/docs/job-specification/service) which will instruct `nomad` to register the service with `consul` for service discovery. This is currently not supported.
 
 ## License
 
