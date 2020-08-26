@@ -123,6 +123,12 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 		opts = append(opts, oci.WithMounts(mounts))
 	}
 
+	// nomad use CNI plugins e.g bridge to setup a network (and network namespace) for the container.
+	// CNI plugins need to be installed under /opt/cni/bin.
+	// network namespace is created at /var/run/netns/<id>.
+	// netnsPath is the path to the network namespace, which containerd joins to provide network
+	// for the container.
+	// NOTE: Only bridge networking mode is supported at this point.
 	if netnsPath != "" {
 		opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{Type: specs.NetworkNamespace, Path: netnsPath}))
 	}
