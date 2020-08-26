@@ -81,6 +81,7 @@ is_capabilities_container_active() {
                 sudo CONTAINERD_NAMESPACE=nomad ctr task ls|grep -q RUNNING
                 if [ $? -eq 0 ]; then
                         echo "INFO: capabilities container is up and running"
+                        sleep 5s
                         break
                 fi
                 echo "INFO: capabilities container is down, sleep for 4 seconds."

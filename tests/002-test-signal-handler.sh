@@ -20,6 +20,23 @@ test_signal_handler_nomad_job() {
         exit 1
     fi
 
+    # Even though $(nomad job status) reports signal job status as "running"
+    # The actual container process might not be running yet.
+    # We need to wait for actual container to start running before trying to send invalid signal.
+    echo "INFO: Wait for signal container to get into RUNNING state, before trying to send invalid signal."
+    is_signal_container_active
+
+    echo "INFO: Test invalid signal."
+    alloc_id=$(nomad job status signal|awk 'END{print}'|cut -d ' ' -f 1)
+    local outfile=$(mktemp /tmp/signal.XXXXXX)
+    nomad alloc signal -s INVALID $alloc_id >> $outfile 2>&1
+    if ! grep -q "Invalid signal" $outfile; then
+        echo "ERROR: Invalid signal didn't error out."
+        cleanup "$outfile"
+        exit 1
+    fi
+    cleanup "$outfile"
+
     echo "INFO: Stopping nomad signal handler job."
     nomad job stop signal
     signal_status=$(nomad job status -short signal|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
@@ -31,6 +48,31 @@ test_signal_handler_nomad_job() {
     echo "INFO: purge nomad signal handler job."
     nomad job stop -purge signal
     popd
+}
+
+cleanup() {
+  local tmpfile=$1
+  rm $tmpfile > /dev/null 2>&1
+}
+
+is_signal_container_active() {
+        i="0"
+        while test $i -lt 5
+        do
+                sudo CONTAINERD_NAMESPACE=nomad ctr task ls|grep -q RUNNING
+                if [ $? -eq 0 ]; then
+                        echo "INFO: signal container is up and running"
+                        break
+                fi
+                echo "INFO: signal container is down, sleep for 4 seconds."
+                sleep 4s
+                i=$[$i+1]
+        done
+
+        if [ $i -ge 5 ]; then
+                echo "ERROR: signal container didn't come up. exit 1."
+                exit 1
+        fi
 }
 
 test_signal_handler_nomad_job
