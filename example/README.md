@@ -19,6 +19,25 @@ Copy the allocation ID from the output of `nomad job status` command.
 $ nomad alloc exec -i -t <allocation_id> /bin/sh
 ```
 
+## Hello World
+
+```
+$ nomad job run hello.nomad
+```
+will start a container using `nomad-driver-containerd` which runs an infinite loop printing
+`hello world` and sleeps for `3 seconds` between each iteration. This is a basic `hello world`
+program which can be used to test launching containers using `nomad-driver-containerd`.
+
+**Check allocation logs**
+
+```
+$ nomad alloc logs -f -job hello
+Hello world: sleeping for 3 seconds.
+Hello world: sleeping for 3 seconds.
+Hello world: sleeping for 3 seconds.
+...
+```
+
 ## Signal Handler
 
 ```
