@@ -32,6 +32,14 @@ test_redis_nomad_job() {
         exit 1
     fi
 
+    echo "INFO: Check if default seccomp is enabled."
+    output=$(nomad alloc exec -job redis cat /proc/1/status | grep Seccomp)
+    seccomp_code=$(echo $output|cut -d' ' -f2)
+    if [ $seccomp_code != "2" ]; then
+       echo "ERROR: default seccomp is not enabled."
+       exit 1
+    fi
+
     echo "INFO: Stopping nomad redis job."
     nomad job stop redis
     redis_status=$(nomad job status -short redis|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
