@@ -85,6 +85,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **command** | string | no | Command to override command defined in the image. |
 | **args** | []string | no | Arguments to the command. |
 | **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
+| **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L390). |
 | **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
 | **host_network** | bool | no | Enable host network. This is equivalent to `--net=host` in docker. |
 | **cap_add** | []string | no | Add individual capabilities. |

@@ -24,6 +24,7 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -63,6 +64,12 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	// Enable privileged mode.
 	if config.Privileged {
 		opts = append(opts, oci.WithPrivileged)
+	}
+
+	// Enable default seccomp profile.
+	// Allowed syscalls for the default seccomp profile: https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L390
+	if config.Seccomp {
+		opts = append(opts, seccomp.WithDefaultProfile())
 	}
 
 	// Launch container in read-only mode.
