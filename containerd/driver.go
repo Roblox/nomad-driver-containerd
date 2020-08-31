@@ -93,6 +93,7 @@ var (
 		"devices":         hclspec.NewAttr("devices", "list(string)", false),
 		"privileged":      hclspec.NewAttr("privileged", "bool", false),
 		"seccomp":         hclspec.NewAttr("seccomp", "bool", false),
+		"seccomp_profile": hclspec.NewAttr("seccomp_profile", "string", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
 		"host_network":    hclspec.NewAttr("host_network", "bool", false),
 		"mounts": hclspec.NewBlockList("mounts", hclspec.NewObject(map[string]*hclspec.Spec{
@@ -143,6 +144,7 @@ type TaskConfig struct {
 	CapDrop        []string `codec:"cap_drop"`
 	Devices        []string `codec:"devices"`
 	Seccomp        bool     `codec:"seccomp"`
+	SeccompProfile string   `codec:"seccomp_profile"`
 	Privileged     bool     `codec:"privileged"`
 	ReadOnlyRootfs bool     `codec:"readonly_rootfs"`
 	HostNetwork    bool     `codec:"host_network"`
