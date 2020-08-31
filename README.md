@@ -113,6 +113,18 @@ mounts = [
            }
         ]
 ```
+**Custom seccomp profile example**
+The default `docker` seccomp profile found [`here`](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json)
+can be downloaded, and modified (by removing/adding syscalls) to create a custom seccomp profile.
+The custom seccomp profile can then be saved under `/opt/seccomp/seccomp.json` on the Nomad client nodes.
+
+A nomad job can be launched using this custom seccomp profile.
+```
+config {
+  seccomp         = true
+  seccomp_profile = "/opt/seccomp/seccomp.json"
+}
+```
 
 ## Networking
 
