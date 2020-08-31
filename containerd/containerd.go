@@ -41,7 +41,7 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
 }
 
-func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime string, env []string, config *TaskConfig) (containerd.Container, error) {
+func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, netnsPath string, env []string, config *TaskConfig) (containerd.Container, error) {
 	if config.Command == "" && len(config.Args) > 0 {
 		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
 	}
@@ -121,6 +121,16 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 
 	if len(mounts) > 0 {
 		opts = append(opts, oci.WithMounts(mounts))
+	}
+
+	// nomad use CNI plugins e.g bridge to setup a network (and network namespace) for the container.
+	// CNI plugins need to be installed under /opt/cni/bin.
+	// network namespace is created at /var/run/netns/<id>.
+	// netnsPath is the path to the network namespace, which containerd joins to provide network
+	// for the container.
+	// NOTE: Only bridge networking mode is supported at this point.
+	if netnsPath != "" {
+		opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{Type: specs.NetworkNamespace, Path: netnsPath}))
 	}
 
 	return d.client.NewContainer(
