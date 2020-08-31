@@ -86,6 +86,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **args** | []string | no | Arguments to the command. |
 | **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
 | **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L390). |
+| **seccomp_profile** | string | no | Path to custom seccomp profile. `seccomp` must be set to `true` in order to use `seccomp_profile`. The default `docker` seccomp profile found [`here`](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json) can be used as a reference, and modified to create a custom seccomp profile. |
 | **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
 | **host_network** | bool | no | Enable host network. This is equivalent to `--net=host` in docker. |
 | **cap_add** | []string | no | Add individual capabilities. |
