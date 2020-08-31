@@ -120,7 +120,7 @@ mounts = [
 **NOTE:** `host` and `bridge` are mutually exclusive options, and only one of them should be used at a time.
 
 1. **Host** network can be enabled by setting `host_network` to `true` in task config
-of the job spec [Check under [`Supported options`](https://github.com/Roblox/nomad-driver-containerd#supported-options)].
+of the job spec (see under [`Supported options`](https://github.com/Roblox/nomad-driver-containerd#supported-options)).
 
 2. **Bridge** network can be enabled by setting the `network` stanza in the task group section of the job spec.
 
@@ -129,12 +129,14 @@ network {
   mode = "bridge"
 }
 ```
-You need to install CNI plugins on nomad client nodes under `/opt/cni/bin` before you can use `bridge` networks.
+You need to install CNI plugins on Nomad client nodes under `/opt/cni/bin` before you can use `bridge` networks.
 
-  **Instructions for installing CNI plugins.**<br/>
- - $ curl -L -o cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.1/cni-plugins-linux-amd64-v0.8.1.tgz<br/>
- - sudo mkdir -p /opt/cni/bin<br/>
- - sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
+**Instructions for installing CNI plugins.**<br/>
+```
+ $ curl -L -o cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.1/cni-plugins-linux-amd64-v0.8.1.tgz
+ $ sudo mkdir -p /opt/cni/bin
+ $ sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
+```
 
 ## Tests
 ```
