@@ -86,6 +86,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **args** | []string | no | Arguments to the command. |
 | **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
 | **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L390). |
+| **seccomp_profile** | string | no | Path to custom seccomp profile. `seccomp` must be set to `true` in order to use `seccomp_profile`. The default `docker` seccomp profile found [`here`](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json) can be used as a reference, and modified to create a custom seccomp profile. |
 | **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
 | **host_network** | bool | no | Enable host network. This is equivalent to `--net=host` in docker. |
 | **cap_add** | []string | no | Add individual capabilities. |
@@ -112,6 +113,19 @@ mounts = [
            }
         ]
 ```
+**Custom seccomp profile example**
+
+The default `docker` seccomp profile found [`here`](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json)
+can be downloaded, and modified (by removing/adding syscalls) to create a custom seccomp profile.<br/>
+The custom seccomp profile can then be saved under `/opt/seccomp/seccomp.json` on the Nomad client nodes.
+
+A nomad job can be launched using this custom seccomp profile.
+```
+config {
+	seccomp         = true
+	seccomp_profile = "/opt/seccomp/seccomp.json"
+}
+```
 
 ## Networking
 
@@ -120,7 +134,7 @@ mounts = [
 **NOTE:** `host` and `bridge` are mutually exclusive options, and only one of them should be used at a time.
 
 1. **Host** network can be enabled by setting `host_network` to `true` in task config
-of the job spec [Check under [`Supported options`](https://github.com/Roblox/nomad-driver-containerd#supported-options)].
+of the job spec (see under [`Supported options`](https://github.com/Roblox/nomad-driver-containerd#supported-options)).
 
 2. **Bridge** network can be enabled by setting the `network` stanza in the task group section of the job spec.
 
@@ -129,12 +143,14 @@ network {
   mode = "bridge"
 }
 ```
-You need to install CNI plugins on nomad client nodes under `/opt/cni/bin` before you can use `bridge` networks.
+You need to install CNI plugins on Nomad client nodes under `/opt/cni/bin` before you can use `bridge` networks.
 
-  **Instructions for installing CNI plugins.**<br/>
- - $ curl -L -o cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.1/cni-plugins-linux-amd64-v0.8.1.tgz<br/>
- - sudo mkdir -p /opt/cni/bin<br/>
- - sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
+**Instructions for installing CNI plugins.**<br/>
+```
+ $ curl -L -o cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz
+ $ sudo mkdir -p /opt/cni/bin
+ $ sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
+```
 
 ## Tests
 ```

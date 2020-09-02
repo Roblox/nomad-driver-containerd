@@ -66,10 +66,18 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 		opts = append(opts, oci.WithPrivileged)
 	}
 
-	// Enable default seccomp profile.
+	if !config.Seccomp && config.SeccompProfile != "" {
+		return nil, fmt.Errorf("seccomp must be set to true, if using a custom seccomp_profile.")
+	}
+
+	// Enable default (or custom) seccomp profile.
 	// Allowed syscalls for the default seccomp profile: https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L390
 	if config.Seccomp {
-		opts = append(opts, seccomp.WithDefaultProfile())
+		if config.SeccompProfile != "" {
+			opts = append(opts, seccomp.WithProfile(config.SeccompProfile))
+		} else {
+			opts = append(opts, seccomp.WithDefaultProfile())
+		}
 	}
 
 	// Launch container in read-only mode.
