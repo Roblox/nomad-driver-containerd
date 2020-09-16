@@ -358,8 +358,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	// Setup environment variables.
 	var env []string
 	for key, val := range cfg.Env {
-		// Don't override $PATH.
-		if key == "PATH" {
+		if skipOverride(key) {
 			continue
 		}
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
@@ -409,6 +408,17 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	d.tasks.Set(cfg.ID, h)
 	go h.run(d.ctxContainerd)
 	return handle, nil, nil
+}
+
+// skipOverride determines whether the environment variable (key) needs an override or not.
+func skipOverride(key string) bool {
+	skipOverrideList := []string{"PATH"}
+	for _, k := range skipOverrideList {
+		if key == k {
+			return true
+		}
+	}
+	return false
 }
 
 // RecoverTask recreates the in-memory state of a task from a TaskHandle.
