@@ -358,6 +358,10 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	// Setup environment variables.
 	var env []string
 	for key, val := range cfg.Env {
+		// Don't override $PATH.
+		if key == "PATH" {
+			continue
+		}
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
