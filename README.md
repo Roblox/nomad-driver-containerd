@@ -151,6 +151,62 @@ You need to install CNI plugins on Nomad client nodes under `/opt/cni/bin` befor
  $ sudo mkdir -p /opt/cni/bin
  $ sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
 ```
+Also, ensure your Linux operating system distribution has been configured to allow container traffic through the bridge network to be routed via iptables. These tunables can be set as follows:
+
+```
+$ echo 1 > /proc/sys/net/bridge/bridge-nf-call-arptables
+$ echo 1 > /proc/sys/net/bridge/bridge-nf-call-ip6tables
+$ echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+```
+To preserve these settings on startup of a nomad client node, add a file including the following to `/etc/sysctl.d/` or remove the file your Linux distribution puts in that directory.
+
+```
+net.bridge.bridge-nf-call-arptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+```
+
+## Port forwarding
+
+nomad supports both **static** and **dynamic** port mapping.
+
+1. **Static ports**
+
+Static port mapping can be added in the `network` stanza.
+```
+network {
+  mode = "bridge"
+  port "lb" {
+    static = 8889
+    to     = 8889
+  }
+}
+```
+Here, `host` port `8889` is mapped to `container` port `8889`.<br/>
+**NOTE**: static ports are usually not recommended, except for `system` or specialized jobs like load balancers.
+
+2. **Dynamic ports**
+
+Dynamic port mapping is also enabled in the `network` stanza.
+```
+network {
+  mode = "bridge"
+  port "http" {
+    to = 8080
+  }
+}
+```
+Here, nomad will allocate a dynamic port on the `host` and that port will be mapped to `8080` in the container.
+
+You can also read more about `network stanza` in the [`nomad official documentation`](https://www.nomadproject.io/docs/job-specification/network)
+
+## Service discovery
+
+Nomad schedules workloads of various types across a cluster of generic hosts. Because of this, placement is not known in advance and you will need to use service discovery to connect tasks to other services deployed across your cluster. Nomad integrates with Consul to provide service discovery and monitoring.
+
+A [`service`](https://www.nomadproject.io/docs/job-specification/service) stanza can be added to your job spec, to enable service discovery. 
+
+The service stanza instructs Nomad to register a service with Consul.
 
 ## Tests
 ```
@@ -173,15 +229,6 @@ This will destroy your vagrant VM.
 
 ## Currently supported environments
 Ubuntu (>= 16.04)
-
-## Limitations
-
-`nomad-driver-containerd` [`v0.1`](https://github.com/Roblox/nomad-driver-containerd/releases/tag/v0.1) is **not** production ready.
-There are some open items which are currently being worked on.
-
-1) **Port forwarding**: The ability to map a host port to a container port. This is currently not supported, but could be supported in future.
-
-2) **Consul connect**: When a user launches a job in `nomad`, s/he can add a [`service stanza`](https://www.nomadproject.io/docs/job-specification/service) which will instruct `nomad` to register the service with `consul` for service discovery. This is currently not supported.
 
 ## License
 
