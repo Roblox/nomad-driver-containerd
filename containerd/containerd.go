@@ -41,7 +41,7 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
 }
 
-func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, netnsPath string, env []string, config *TaskConfig) (containerd.Container, error) {
+func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, netnsPath, secretsDir, taskDir string, env []string, config *TaskConfig) (containerd.Container, error) {
 	if config.Command == "" && len(config.Args) > 0 {
 		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
 	}
@@ -119,12 +119,20 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 			return nil, fmt.Errorf("Options cannot be empty for mount type: %s. You need to atleast pass rbind and ro.", mount.Type)
 		}
 
-		m := specs.Mount{}
-		m.Type = mount.Type
-		m.Destination = mount.Target
-		m.Source = mount.Source
-		m.Options = mount.Options
+		m := buildMountpoint(mount.Type, mount.Target, mount.Source, mount.Options)
 		mounts = append(mounts, m)
+	}
+
+	// Setup "/secrets" (NOMAD_SECRETS_DIR) in the container.
+	if secretsDir != "" {
+		secretsMount := buildMountpoint("bind", "/secrets", secretsDir, []string{"rbind", "ro"})
+		mounts = append(mounts, secretsMount)
+	}
+
+	// Setup "/local" (NOMAD_TASK_DIR) in the container.
+	if taskDir != "" {
+		taskMount := buildMountpoint("bind", "/local", taskDir, []string{"rbind", "ro"})
+		mounts = append(mounts, taskMount)
 	}
 
 	if len(mounts) > 0 {
@@ -148,6 +156,16 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 		containerd.WithNewSnapshot(containerSnapshotName, image),
 		containerd.WithNewSpec(opts...),
 	)
+}
+
+// buildMountpoint builds the mount point for the container.
+func buildMountpoint(mountType, mountTarget, mountSource string, mountOptions []string) specs.Mount {
+	m := specs.Mount{}
+	m.Type = mountType
+	m.Destination = mountTarget
+	m.Source = mountSource
+	m.Options = mountOptions
+	return m
 }
 
 func (d *Driver) loadContainer(id string) (containerd.Container, error) {
