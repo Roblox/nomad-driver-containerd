@@ -357,9 +357,16 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 
 	// Setup environment variables.
 	var env []string
+	var secretsDir, taskDir string
 	for key, val := range cfg.Env {
 		if skipOverride(key) {
 			continue
+		}
+		if key == "NOMAD_SECRETS_DIR" {
+			secretsDir = val
+		}
+		if key == "NOMAD_TASK_DIR" {
+			taskDir = val
 		}
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
@@ -370,7 +377,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		netnsPath = cfg.NetworkIsolation.Path
 	}
 
-	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, netnsPath, env, &driverConfig)
+	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, netnsPath, secretsDir, taskDir, env, &driverConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
