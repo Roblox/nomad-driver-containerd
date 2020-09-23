@@ -41,7 +41,7 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
 }
 
-func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, netnsPath, secretsDir, taskDir string, env []string, config *TaskConfig) (containerd.Container, error) {
+func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, netnsPath, secretsDir, taskDir, allocDir string, env []string, config *TaskConfig) (containerd.Container, error) {
 	if config.Command == "" && len(config.Args) > 0 {
 		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
 	}
@@ -133,6 +133,12 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	if taskDir != "" {
 		taskMount := buildMountpoint("bind", "/local", taskDir, []string{"rbind", "ro"})
 		mounts = append(mounts, taskMount)
+	}
+
+	// Setup "/alloc" (NOMAD_ALLOC_DIR) in the container.
+	if allocDir != "" {
+		allocMount := buildMountpoint("bind", "/alloc", allocDir, []string{"rbind", "ro"})
+		mounts = append(mounts, allocMount)
 	}
 
 	if len(mounts) > 0 {
