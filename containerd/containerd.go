@@ -41,7 +41,7 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
 }
 
-func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, netnsPath, secretsDir, taskDir, allocDir string, env []string, config *TaskConfig) (containerd.Container, error) {
+func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, netnsPath, secretsDir, taskDir, allocDir string, env []string, memoryLimit int64, config *TaskConfig) (containerd.Container, error) {
 	if config.Command == "" && len(config.Args) > 0 {
 		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
 	}
@@ -104,6 +104,9 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 
 	// Set environment variables.
 	opts = append(opts, oci.WithEnv(env))
+
+	// Set cgroups memory limit.
+	opts = append(opts, oci.WithMemoryLimit(uint64(memoryLimit)))
 
 	// Add linux devices into the container.
 	for _, device := range config.Devices {
