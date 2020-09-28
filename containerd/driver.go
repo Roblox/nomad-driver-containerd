@@ -380,7 +380,12 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		netnsPath = cfg.NetworkIsolation.Path
 	}
 
-	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, netnsPath, secretsDir, taskDir, allocDir, env, cfg.Resources.LinuxResources.MemoryLimitBytes, &driverConfig)
+	// memory and cpu are coming from the resources stanza of the nomad job.
+	// https://www.nomadproject.io/docs/job-specification/resources
+	memoryLimit := cfg.Resources.LinuxResources.MemoryLimitBytes
+	cpuShares := cfg.Resources.LinuxResources.CPUShares
+
+	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, netnsPath, secretsDir, taskDir, allocDir, env, memoryLimit, cpuShares, &driverConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}

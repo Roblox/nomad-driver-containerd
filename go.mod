@@ -11,7 +11,7 @@ require (
 	github.com/appc/spec v0.8.11 // indirect
 	github.com/checkpoint-restore/go-criu v0.0.0-20191125063657-fcdcd07065c5 // indirect
 	github.com/containerd/cgroups v0.0.0-20200609174450-80c669f4bad0
-	github.com/containerd/containerd v1.3.0
+	github.com/containerd/containerd v1.4.1
 	github.com/containerd/go-cni v0.0.0-20191121212822-60d125212faf // indirect
 	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
 	github.com/containernetworking/plugins v0.8.3 // indirect
@@ -26,6 +26,8 @@ require (
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/fsouza/go-dockerclient v1.6.0 // indirect
+	github.com/gogo/googleapis v1.4.0 // indirect
+	github.com/google/uuid v1.1.2 // indirect
 	github.com/hashicorp/consul v1.6.2 // indirect
 	github.com/hashicorp/consul-template v0.23.0
 	github.com/hashicorp/go-envparse v0.0.0-20190703193109-150b3a2a4611 // indirect
@@ -49,6 +51,7 @@ require (
 	github.com/vbatts/tar-split v0.11.1 // indirect
 	github.com/zclconf/go-cty v1.1.1 // indirect
 	go4.org v0.0.0-20191010144846-132d2879e1e9 // indirect
+	google.golang.org/grpc v1.32.0 // indirect
 )
 
 // use lower-case sirupsen
