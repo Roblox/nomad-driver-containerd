@@ -336,6 +336,8 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("failed to decode driver config: %v", err)
 	}
 
+	containerConfig := ContainerConfig{}
+
 	if driverConfig.HostNetwork && cfg.NetworkIsolation != nil {
 		return nil, nil, fmt.Errorf("host_network and bridge network mode are mutually exclusive, and only one of them should be set")
 	}
@@ -347,40 +349,44 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	// Generate a random container name using docker namesgenerator package.
 	// https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go
 	containerName := cfg.AllocID[:8] + "_" + namesgenerator.GetRandomName(1)
+	containerConfig.ContainerName = containerName
 
-	image, err := d.pullImage(driverConfig.Image)
+	var err error
+	containerConfig.Image, err = d.pullImage(driverConfig.Image)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in pulling image: %v", err)
 	}
 
-	d.logger.Info(fmt.Sprintf("Successfully pulled %s image\n", image.Name()))
+	d.logger.Info(fmt.Sprintf("Successfully pulled %s image\n", containerConfig.Image.Name()))
 
 	// Setup environment variables.
-	var env []string
-	var secretsDir, taskDir, allocDir string
 	for key, val := range cfg.Env {
 		if skipOverride(key) {
 			continue
 		}
 		if key == "NOMAD_SECRETS_DIR" {
-			secretsDir = val
+			containerConfig.SecretsDir = val
 		}
 		if key == "NOMAD_TASK_DIR" {
-			taskDir = val
+			containerConfig.TaskDir = val
 		}
 		if key == "NOMAD_ALLOC_DIR" {
-			allocDir = val
+			containerConfig.AllocDir = val
 		}
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
+		containerConfig.Env = append(containerConfig.Env, fmt.Sprintf("%s=%s", key, val))
 	}
 
-	containerSnapshotName := fmt.Sprintf("%s-snapshot", containerName)
-	var netnsPath string
+	containerConfig.ContainerSnapshotName = fmt.Sprintf("%s-snapshot", containerName)
 	if cfg.NetworkIsolation != nil && cfg.NetworkIsolation.Path != "" {
-		netnsPath = cfg.NetworkIsolation.Path
+		containerConfig.NetworkNamespacePath = cfg.NetworkIsolation.Path
 	}
 
-	container, err := d.createContainer(image, containerName, containerSnapshotName, d.config.ContainerdRuntime, netnsPath, secretsDir, taskDir, allocDir, env, cfg.Resources.LinuxResources.MemoryLimitBytes, &driverConfig)
+	// memory and cpu are coming from the resources stanza of the nomad job.
+	// https://www.nomadproject.io/docs/job-specification/resources
+	containerConfig.MemoryLimit = cfg.Resources.LinuxResources.MemoryLimitBytes
+	containerConfig.CPUShares = cfg.Resources.LinuxResources.CPUShares
+
+	container, err := d.createContainer(&containerConfig, &driverConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}

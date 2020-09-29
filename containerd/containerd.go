@@ -29,6 +29,19 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+type ContainerConfig struct {
+	Image                 containerd.Image
+	ContainerName         string
+	ContainerSnapshotName string
+	NetworkNamespacePath  string
+	SecretsDir            string
+	TaskDir               string
+	AllocDir              string
+	Env                   []string
+	MemoryLimit           int64
+	CPUShares             int64
+}
+
 func (d *Driver) isContainerdRunning() (bool, error) {
 	return d.client.IsServing(d.ctxContainerd)
 }
@@ -41,7 +54,7 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
 }
 
-func (d *Driver) createContainer(image containerd.Image, containerName, containerSnapshotName, containerdRuntime, netnsPath, secretsDir, taskDir, allocDir string, env []string, memoryLimit int64, config *TaskConfig) (containerd.Container, error) {
+func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
 	if config.Command == "" && len(config.Args) > 0 {
 		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
 	}
@@ -59,7 +72,7 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 
 	var opts []oci.SpecOpts
 
-	opts = append(opts, oci.WithImageConfigArgs(image, args))
+	opts = append(opts, oci.WithImageConfigArgs(containerConfig.Image, args))
 
 	// Enable privileged mode.
 	if config.Privileged {
@@ -103,10 +116,13 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	}
 
 	// Set environment variables.
-	opts = append(opts, oci.WithEnv(env))
+	opts = append(opts, oci.WithEnv(containerConfig.Env))
 
 	// Set cgroups memory limit.
-	opts = append(opts, oci.WithMemoryLimit(uint64(memoryLimit)))
+	opts = append(opts, oci.WithMemoryLimit(uint64(containerConfig.MemoryLimit)))
+
+	// Set CPU Shares.
+	opts = append(opts, oci.WithCPUShares(uint64(containerConfig.CPUShares)))
 
 	// Add linux devices into the container.
 	for _, device := range config.Devices {
@@ -127,20 +143,20 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	}
 
 	// Setup "/secrets" (NOMAD_SECRETS_DIR) in the container.
-	if secretsDir != "" {
-		secretsMount := buildMountpoint("bind", "/secrets", secretsDir, []string{"rbind", "ro"})
+	if containerConfig.SecretsDir != "" {
+		secretsMount := buildMountpoint("bind", "/secrets", containerConfig.SecretsDir, []string{"rbind", "ro"})
 		mounts = append(mounts, secretsMount)
 	}
 
 	// Setup "/local" (NOMAD_TASK_DIR) in the container.
-	if taskDir != "" {
-		taskMount := buildMountpoint("bind", "/local", taskDir, []string{"rbind", "ro"})
+	if containerConfig.TaskDir != "" {
+		taskMount := buildMountpoint("bind", "/local", containerConfig.TaskDir, []string{"rbind", "ro"})
 		mounts = append(mounts, taskMount)
 	}
 
 	// Setup "/alloc" (NOMAD_ALLOC_DIR) in the container.
-	if allocDir != "" {
-		allocMount := buildMountpoint("bind", "/alloc", allocDir, []string{"rbind", "ro"})
+	if containerConfig.AllocDir != "" {
+		allocMount := buildMountpoint("bind", "/alloc", containerConfig.AllocDir, []string{"rbind", "ro"})
 		mounts = append(mounts, allocMount)
 	}
 
@@ -151,18 +167,18 @@ func (d *Driver) createContainer(image containerd.Image, containerName, containe
 	// nomad use CNI plugins e.g bridge to setup a network (and network namespace) for the container.
 	// CNI plugins need to be installed under /opt/cni/bin.
 	// network namespace is created at /var/run/netns/<id>.
-	// netnsPath is the path to the network namespace, which containerd joins to provide network
-	// for the container.
+	// containerConfig.NetworkNamespacePath is the path to the network namespace, which
+	// containerd joins to provide network for the container.
 	// NOTE: Only bridge networking mode is supported at this point.
-	if netnsPath != "" {
-		opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{Type: specs.NetworkNamespace, Path: netnsPath}))
+	if containerConfig.NetworkNamespacePath != "" {
+		opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{Type: specs.NetworkNamespace, Path: containerConfig.NetworkNamespacePath}))
 	}
 
 	return d.client.NewContainer(
 		d.ctxContainerd,
-		containerName,
-		containerd.WithRuntime(containerdRuntime, nil),
-		containerd.WithNewSnapshot(containerSnapshotName, image),
+		containerConfig.ContainerName,
+		containerd.WithRuntime(d.config.ContainerdRuntime, nil),
+		containerd.WithNewSnapshot(containerConfig.ContainerSnapshotName, containerConfig.Image),
 		containerd.WithNewSpec(opts...),
 	)
 }
