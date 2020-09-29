@@ -85,13 +85,17 @@ var (
 	// this is used to validate the configuration specified for the plugin
 	// when a job is submitted.
 	taskConfigSpec = hclspec.NewObject(map[string]*hclspec.Spec{
-		"image":           hclspec.NewAttr("image", "string", true),
-		"command":         hclspec.NewAttr("command", "string", false),
-		"args":            hclspec.NewAttr("args", "list(string)", false),
-		"cap_add":         hclspec.NewAttr("cap_add", "list(string)", false),
-		"cap_drop":        hclspec.NewAttr("cap_drop", "list(string)", false),
-		"devices":         hclspec.NewAttr("devices", "list(string)", false),
-		"privileged":      hclspec.NewAttr("privileged", "bool", false),
+		"image":      hclspec.NewAttr("image", "string", true),
+		"command":    hclspec.NewAttr("command", "string", false),
+		"args":       hclspec.NewAttr("args", "list(string)", false),
+		"cap_add":    hclspec.NewAttr("cap_add", "list(string)", false),
+		"cap_drop":   hclspec.NewAttr("cap_drop", "list(string)", false),
+		"devices":    hclspec.NewAttr("devices", "list(string)", false),
+		"privileged": hclspec.NewAttr("privileged", "bool", false),
+		"host_dns": hclspec.NewDefault(
+			hclspec.NewAttr("host_dns", "bool", false),
+			hclspec.NewLiteral("true"),
+		),
 		"seccomp":         hclspec.NewAttr("seccomp", "bool", false),
 		"seccomp_profile": hclspec.NewAttr("seccomp_profile", "string", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
@@ -146,6 +150,7 @@ type TaskConfig struct {
 	Seccomp        bool     `codec:"seccomp"`
 	SeccompProfile string   `codec:"seccomp_profile"`
 	Privileged     bool     `codec:"privileged"`
+	HostDNS        bool     `codec:"host_dns"`
 	ReadOnlyRootfs bool     `codec:"readonly_rootfs"`
 	HostNetwork    bool     `codec:"host_network"`
 	Mounts         []Mount  `codec:"mounts"`
