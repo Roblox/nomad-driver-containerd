@@ -8,6 +8,7 @@ job "redis" {
       config {
         image   = "docker.io/library/redis:alpine"
         seccomp = true
+        cwd     = "/home/redis"
       }
 
       resources {

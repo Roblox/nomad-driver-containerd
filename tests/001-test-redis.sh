@@ -25,10 +25,10 @@ test_redis_nomad_job() {
         exit 1
     fi
 
-    echo "INFO: Exec redis job."
-    exec_output=$(nomad alloc exec -job redis echo hello_exec)
-    if [ $exec_output != "hello_exec" ]; then
-        echo "ERROR: Error in exec'ing redis job."
+    echo "INFO: Exec redis job and check current working directory (cwd)."
+    exec_output=$(nomad alloc exec -job redis pwd)
+    if [ $exec_output != "/home/redis" ]; then
+        echo "ERROR: Error in exec'ing redis job and checking current working directory (cwd)."
         exit 1
     fi
 
