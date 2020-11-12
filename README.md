@@ -87,6 +87,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **image** | string | yes | OCI image (docker is also OCI compatible) for your container. |
 | **command** | string | no | Command to override command defined in the image. |
 | **args** | []string | no | Arguments to the command. |
+| **cwd** | string | no | Specify the current working directory for your container process. If the directory does not exist, one will be created for you. |
 | **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
 | **host_dns** | bool | no | Default (`true`). By default, a container launched using `containerd-driver` will use host `/etc/resolv.conf`. This is similar to [`docker behavior`](https://docs.docker.com/config/containers/container-networking/#dns-services). However, if you don't want to use host DNS, you can turn off this flag by setting `host_dns=false`. |
 | **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L390). |
