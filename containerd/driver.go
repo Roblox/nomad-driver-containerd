@@ -90,6 +90,7 @@ var (
 		"args":       hclspec.NewAttr("args", "list(string)", false),
 		"cap_add":    hclspec.NewAttr("cap_add", "list(string)", false),
 		"cap_drop":   hclspec.NewAttr("cap_drop", "list(string)", false),
+		"cwd":        hclspec.NewAttr("cwd", "string", false),
 		"devices":    hclspec.NewAttr("devices", "list(string)", false),
 		"privileged": hclspec.NewAttr("privileged", "bool", false),
 		"host_dns": hclspec.NewDefault(
@@ -146,6 +147,7 @@ type TaskConfig struct {
 	Args           []string `codec:"args"`
 	CapAdd         []string `codec:"cap_add"`
 	CapDrop        []string `codec:"cap_drop"`
+	Cwd            string   `codec:"cwd"`
 	Devices        []string `codec:"devices"`
 	Seccomp        bool     `codec:"seccomp"`
 	SeccompProfile string   `codec:"seccomp_profile"`

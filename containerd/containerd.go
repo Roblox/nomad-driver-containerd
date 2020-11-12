@@ -115,6 +115,11 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		opts = append(opts, oci.WithDroppedCapabilities(config.CapDrop))
 	}
 
+	// Set current working directory (cwd).
+	if config.Cwd != "" {
+		opts = append(opts, oci.WithProcessCwd(config.Cwd))
+	}
+
 	// Set environment variables.
 	opts = append(opts, oci.WithEnv(containerConfig.Env))
 
