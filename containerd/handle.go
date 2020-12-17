@@ -88,7 +88,10 @@ func (h *taskHandle) IsRunning(ctxContainerd context.Context) (bool, error) {
 	h.stateLock.RLock()
 	defer h.stateLock.RUnlock()
 
-	status, err := h.task.Status(ctxContainerd)
+	ctxWithTimeout, cancel := context.WithTimeout(ctxContainerd, 15*time.Second)
+	defer cancel()
+
+	status, err := h.task.Status(ctxWithTimeout)
 	if err != nil {
 		return false, fmt.Errorf("Error in getting task status: %v", err)
 	}
@@ -109,7 +112,10 @@ func (h *taskHandle) run(ctxContainerd context.Context) {
 	// TODO: Use goroutine and a channel to synchronize this, instead of sleep.
 	time.Sleep(5 * time.Second)
 
-	h.task.Start(ctxContainerd)
+	ctxWithTimeout, cancel := context.WithTimeout(ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	h.task.Start(ctxWithTimeout)
 }
 
 // exec launches a new process in a running container.
@@ -117,7 +123,10 @@ func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opt
 	defer opts.Stdout.Close()
 	defer opts.Stderr.Close()
 
-	spec, err := h.container.Spec(ctxContainerd)
+	ctxWithTimeout, cancel := context.WithTimeout(ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	spec, err := h.container.Spec(ctxWithTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -136,19 +145,19 @@ func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opt
 	}
 	ioCreator := cio.NewCreator(cioOpts...)
 
-	process, err := h.task.Exec(ctxContainerd, execID[:8], pspec, ioCreator)
+	process, err := h.task.Exec(ctxWithTimeout, execID[:8], pspec, ioCreator)
 	if err != nil {
 		return nil, err
 	}
 
-	defer process.Delete(ctxContainerd)
+	defer process.Delete(ctxWithTimeout)
 
-	statusC, err := process.Wait(ctxContainerd)
+	statusC, err := process.Wait(ctxWithTimeout)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := process.Start(ctxContainerd); err != nil {
+	if err := process.Start(ctxWithTimeout); err != nil {
 		return nil, err
 	}
 
@@ -175,7 +184,10 @@ func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opt
 }
 
 func (h *taskHandle) shutdown(ctxContainerd context.Context, timeout time.Duration, signal syscall.Signal) error {
-	if err := h.task.Kill(ctxContainerd, signal); err != nil {
+	ctxWithTimeout, cancel := context.WithTimeout(ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	if err := h.task.Kill(ctxWithTimeout, signal); err != nil {
 		return err
 	}
 
@@ -184,7 +196,7 @@ func (h *taskHandle) shutdown(ctxContainerd context.Context, timeout time.Durati
 	// if they need more time for their container to shutdown gracefully.
 	time.Sleep(timeout)
 
-	status, err := h.task.Status(ctxContainerd)
+	status, err := h.task.Status(ctxWithTimeout)
 	if err != nil {
 		return err
 	}
@@ -194,14 +206,17 @@ func (h *taskHandle) shutdown(ctxContainerd context.Context, timeout time.Durati
 		return nil
 	}
 
-	return h.task.Kill(ctxContainerd, syscall.SIGKILL)
+	return h.task.Kill(ctxWithTimeout, syscall.SIGKILL)
 }
 
 func (h *taskHandle) cleanup(ctxContainerd context.Context) error {
-	if _, err := h.task.Delete(ctxContainerd); err != nil {
+	ctxWithTimeout, cancel := context.WithTimeout(ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	if _, err := h.task.Delete(ctxWithTimeout); err != nil {
 		return err
 	}
-	if err := h.container.Delete(ctxContainerd, containerd.WithSnapshotCleanup); err != nil {
+	if err := h.container.Delete(ctxWithTimeout, containerd.WithSnapshotCleanup); err != nil {
 		return err
 	}
 	return nil
@@ -209,6 +224,7 @@ func (h *taskHandle) cleanup(ctxContainerd context.Context) error {
 
 func (h *taskHandle) stats(ctx, ctxContainerd context.Context, interval time.Duration) (<-chan *drivers.TaskResourceUsage, error) {
 	ch := make(chan *drivers.TaskResourceUsage)
+
 	go h.handleStats(ch, ctx, ctxContainerd, interval)
 
 	return ch, nil
@@ -216,6 +232,10 @@ func (h *taskHandle) stats(ctx, ctxContainerd context.Context, interval time.Dur
 
 func (h *taskHandle) handleStats(ch chan *drivers.TaskResourceUsage, ctx, ctxContainerd context.Context, interval time.Duration) {
 	defer close(ch)
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctxContainerd, 30*time.Second)
+	defer cancel()
+
 	timer := time.NewTimer(0)
 	for {
 		select {
@@ -226,7 +246,7 @@ func (h *taskHandle) handleStats(ch chan *drivers.TaskResourceUsage, ctx, ctxCon
 		}
 
 		// Get containerd task metric
-		metric, err := h.task.Metrics(ctxContainerd)
+		metric, err := h.task.Metrics(ctxWithTimeout)
 		if err != nil {
 			h.logger.Error("Failed to get task metric:", "error", err)
 			return
@@ -315,5 +335,8 @@ func (h *taskHandle) getV2TaskResourceUsage(metrics *v2.Metrics) *drivers.TaskRe
 	}
 }
 func (h *taskHandle) signal(ctxContainerd context.Context, sig os.Signal) error {
-	return h.task.Kill(ctxContainerd, sig.(syscall.Signal))
+	ctxWithTimeout, cancel := context.WithTimeout(ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	return h.task.Kill(ctxWithTimeout, sig.(syscall.Signal))
 }

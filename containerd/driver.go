@@ -429,6 +429,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 
 	d.tasks.Set(cfg.ID, h)
+
 	go h.run(d.ctxContainerd)
 	return handle, nil, nil
 }
@@ -474,7 +475,10 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		return fmt.Errorf("Error in recovering task: %v", err)
 	}
 
-	status, err := task.Status(d.ctxContainerd)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	status, err := task.Status(ctxWithTimeout)
 	if err != nil {
 		return fmt.Errorf("Error in recovering task status: %v", err)
 	}
@@ -519,7 +523,10 @@ func (d *Driver) handleWait(ctx context.Context, handle *taskHandle, ch chan *dr
 	defer close(ch)
 	var result *drivers.ExitResult
 
-	exitStatusCh, err := handle.task.Wait(d.ctxContainerd)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	exitStatusCh, err := handle.task.Wait(ctxWithTimeout)
 	if err != nil {
 		result = &drivers.ExitResult{
 			Err: fmt.Errorf("executor: error waiting on process: %v", err),

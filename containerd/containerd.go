@@ -18,9 +18,11 @@ limitations under the License.
 package containerd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -43,15 +45,24 @@ type ContainerConfig struct {
 }
 
 func (d *Driver) isContainerdRunning() (bool, error) {
-	return d.client.IsServing(d.ctxContainerd)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	defer cancel()
+
+	return d.client.IsServing(ctxWithTimeout)
 }
 
 func (d *Driver) getContainerdVersion() (containerd.Version, error) {
-	return d.client.Version(d.ctxContainerd)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	defer cancel()
+
+	return d.client.Version(ctxWithTimeout)
 }
 
 func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
-	return d.client.Pull(d.ctxContainerd, imageName, containerd.WithPullUnpack)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 90*time.Second)
+	defer cancel()
+
+	return d.client.Pull(ctxWithTimeout, imageName, containerd.WithPullUnpack)
 }
 
 func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
@@ -185,8 +196,11 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{Type: specs.NetworkNamespace, Path: containerConfig.NetworkNamespacePath}))
 	}
 
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	defer cancel()
+
 	return d.client.NewContainer(
-		d.ctxContainerd,
+		ctxWithTimeout,
 		containerConfig.ContainerName,
 		containerd.WithRuntime(d.config.ContainerdRuntime, nil),
 		containerd.WithNewSnapshot(containerConfig.ContainerSnapshotName, containerConfig.Image),
@@ -205,7 +219,10 @@ func buildMountpoint(mountType, mountTarget, mountSource string, mountOptions []
 }
 
 func (d *Driver) loadContainer(id string) (containerd.Container, error) {
-	return d.client.LoadContainer(d.ctxContainerd, id)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	defer cancel()
+
+	return d.client.LoadContainer(ctxWithTimeout, id)
 }
 
 func (d *Driver) createTask(container containerd.Container, stdoutPath, stderrPath string) (containerd.Task, error) {
@@ -219,7 +236,10 @@ func (d *Driver) createTask(container containerd.Container, stdoutPath, stderrPa
 		return nil, err
 	}
 
-	return container.NewTask(d.ctxContainerd, cio.NewCreator(cio.WithStreams(nil, stdout, stderr)))
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	return container.NewTask(ctxWithTimeout, cio.NewCreator(cio.WithStreams(nil, stdout, stderr)))
 }
 
 // FIFO's are named pipes in linux.
@@ -229,5 +249,8 @@ func openFIFO(path string) (*os.File, error) {
 }
 
 func (d *Driver) getTask(container containerd.Container) (containerd.Task, error) {
-	return container.Task(d.ctxContainerd, cio.Load)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	defer cancel()
+
+	return container.Task(ctxWithTimeout, cio.Load)
 }
