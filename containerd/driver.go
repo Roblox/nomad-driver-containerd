@@ -529,17 +529,15 @@ func (d *Driver) handleWait(ctx context.Context, handle *taskHandle, ch chan *dr
 	exitStatusCh, err := handle.task.Wait(ctxWithTimeout)
 	if err != nil {
 		result = &drivers.ExitResult{
-			Err: fmt.Errorf("executor: error waiting on process: %v", err),
+			ExitCode: 255,
+			Err:      fmt.Errorf("executor: error waiting on process: %v", err),
 		}
 	} else {
 		status := <-exitStatusCh
 		code, _, err := status.Result()
-		if err != nil {
-			d.logger.Error(err.Error())
-			return
-		}
 		result = &drivers.ExitResult{
 			ExitCode: int(code),
+			Err:      err,
 		}
 	}
 
