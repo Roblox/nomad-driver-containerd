@@ -45,14 +45,14 @@ type ContainerConfig struct {
 }
 
 func (d *Driver) isContainerdRunning() (bool, error) {
-	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
 	defer cancel()
 
 	return d.client.IsServing(ctxWithTimeout)
 }
 
 func (d *Driver) getContainerdVersion() (containerd.Version, error) {
-	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
 	defer cancel()
 
 	return d.client.Version(ctxWithTimeout)
@@ -196,7 +196,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{Type: specs.NetworkNamespace, Path: containerConfig.NetworkNamespacePath}))
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
 	defer cancel()
 
 	return d.client.NewContainer(
@@ -219,7 +219,7 @@ func buildMountpoint(mountType, mountTarget, mountSource string, mountOptions []
 }
 
 func (d *Driver) loadContainer(id string) (containerd.Container, error) {
-	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
 	defer cancel()
 
 	return d.client.LoadContainer(ctxWithTimeout, id)
@@ -249,7 +249,7 @@ func openFIFO(path string) (*os.File, error) {
 }
 
 func (d *Driver) getTask(container containerd.Container) (containerd.Task, error) {
-	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 15*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
 	defer cancel()
 
 	return container.Task(ctxWithTimeout, cio.Load)

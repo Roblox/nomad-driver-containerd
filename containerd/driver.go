@@ -523,10 +523,7 @@ func (d *Driver) handleWait(ctx context.Context, handle *taskHandle, ch chan *dr
 	defer close(ch)
 	var result *drivers.ExitResult
 
-	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
-	defer cancel()
-
-	exitStatusCh, err := handle.task.Wait(ctxWithTimeout)
+	exitStatusCh, err := handle.task.Wait(d.ctxContainerd)
 	if err != nil {
 		result = &drivers.ExitResult{
 			ExitCode: 255,
