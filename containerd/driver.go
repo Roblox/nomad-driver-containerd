@@ -309,7 +309,7 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 	isRunning, err := d.isContainerdRunning()
 	if err != nil || !isRunning {
 		if err != nil {
-			d.logger.Error("Error in buildFingerprint(): failed to get containerd status: %v", err)
+			d.logger.Error(fmt.Sprintf("Error in buildFingerprint(): failed to get containerd status: %v\n", err))
 		}
 		fp.Health = drivers.HealthStateUnhealthy
 		fp.HealthDescription = "Unhealthy"
@@ -319,7 +319,7 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 	// Get containerd version
 	version, err := d.getContainerdVersion()
 	if err != nil {
-		d.logger.Warn("Error in buildFingerprint(): failed to get containerd version: %v", err)
+		d.logger.Warn(fmt.Sprintf("Error in buildFingerprint(): failed to get containerd version: %v\n", err))
 		return fp
 	}
 
@@ -394,13 +394,13 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
 
-	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s", containerName))
+	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s\n", containerName))
 	task, err := d.createTask(container, cfg.StdoutPath, cfg.StderrPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating task: %v", err)
 	}
 
-	d.logger.Info(fmt.Sprintf("Successfully created task with ID: %s", task.ID()))
+	d.logger.Info(fmt.Sprintf("Successfully created task with ID: %s\n", task.ID()))
 
 	h := &taskHandle{
 		taskConfig:     cfg,
@@ -499,7 +499,7 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		go h.run(d.ctxContainerd)
 	}
 
-	d.logger.Info(fmt.Sprintf("Task with ID: %s recovered successfully.", handle.Config.ID))
+	d.logger.Info(fmt.Sprintf("Task with ID: %s recovered successfully.\n", handle.Config.ID))
 	return nil
 }
 
@@ -605,7 +605,7 @@ func (d *Driver) TaskStats(ctx context.Context, taskID string, interval time.Dur
 		if err != nil {
 			d.logger.Warn("Error parsing driver stats interval, fallback on default interval")
 		} else {
-			msg := fmt.Sprintf("Overriding client stats interval: %v with driver stats interval: %v", interval, d.config.StatsInterval)
+			msg := fmt.Sprintf("Overriding client stats interval: %v with driver stats interval: %v\n", interval, d.config.StatsInterval)
 			d.logger.Debug(msg)
 			interval = statsInterval
 		}
