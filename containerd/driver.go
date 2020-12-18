@@ -307,14 +307,10 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 	}
 
 	isRunning, err := d.isContainerdRunning()
-	if err != nil {
-		d.logger.Error("Error in buildFingerprint(): failed to get containerd status: %v", err)
-		fp.Health = drivers.HealthStateUndetected
-		fp.HealthDescription = "Undetected"
-		return fp
-	}
-
-	if !isRunning {
+	if err != nil || !isRunning {
+		if err != nil {
+			d.logger.Error("Error in buildFingerprint(): failed to get containerd status: %v", err)
+		}
 		fp.Health = drivers.HealthStateUnhealthy
 		fp.HealthDescription = "Unhealthy"
 		return fp
