@@ -23,11 +23,22 @@ import (
 	"github.com/Roblox/nomad-driver-containerd/containerd"
 
 	"github.com/hashicorp/nomad/plugins"
+
+	"github.com/spf13/cobra"
 )
 
 func main() {
-	// Serve the plugin
-	plugins.Serve(factory)
+	var cmd = &cobra.Command{
+		Use:     containerd.PluginName,
+		Short:   "Nomad task driver for launching containers using containerd",
+		Version: containerd.PluginVersion,
+		Run: func(cmd *cobra.Command, args []string) {
+			// Serve the plugin
+			plugins.Serve(factory)
+		},
+	}
+	cmd.SetVersionTemplate("{{.Use}} {{.Version}}\n")
+	cmd.Execute()
 }
 
 // factory returns a new instance of a nomad driver plugin

@@ -38,14 +38,14 @@ import (
 )
 
 const (
-	// pluginName is the name of the plugin
+	// PluginName is the name of the plugin
 	// this is used for logging and (along with the version) for uniquely
 	// identifying plugin binaries fingerprinted by the client
-	pluginName = "containerd-driver"
+	PluginName = "containerd-driver"
 
-	// pluginVersion allows the client to identify and use newer versions of
+	// PluginVersion allows the client to identify and use newer versions of
 	// an installed plugin
-	pluginVersion = "v0.1.0"
+	PluginVersion = "v0.5.0"
 
 	// fingerprintPeriod is the interval at which the plugin will send
 	// fingerprint responses
@@ -63,8 +63,8 @@ var (
 	pluginInfo = &base.PluginInfoResponse{
 		Type:              base.PluginTypeDriver,
 		PluginApiVersions: []string{drivers.ApiVersion010},
-		PluginVersion:     pluginVersion,
-		Name:              pluginName,
+		PluginVersion:     PluginVersion,
+		Name:              PluginName,
 	}
 
 	// configSpec is the specification of the plugin's configuration
@@ -202,7 +202,7 @@ type Driver struct {
 // NewPlugin returns a new containerd driver plugin
 func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 	ctx, cancel := context.WithCancel(context.Background())
-	logger = logger.Named(pluginName)
+	logger = logger.Named(PluginName)
 
 	// This will create a new containerd client which will talk to
 	// default containerd socket path.
