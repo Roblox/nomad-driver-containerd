@@ -11,7 +11,7 @@ require (
 	github.com/appc/spec v0.8.11 // indirect
 	github.com/checkpoint-restore/go-criu v0.0.0-20191125063657-fcdcd07065c5 // indirect
 	github.com/containerd/cgroups v0.0.0-20200609174450-80c669f4bad0
-	github.com/containerd/containerd v1.4.1
+	github.com/containerd/containerd v1.4.3
 	github.com/containerd/go-cni v0.0.0-20191121212822-60d125212faf // indirect
 	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
 	github.com/containernetworking/plugins v0.8.3 // indirect
@@ -46,6 +46,7 @@ require (
 	github.com/opencontainers/selinux v1.3.1 // indirect
 	github.com/seccomp/libseccomp-golang v0.9.1 // indirect
 	github.com/shirou/gopsutil v2.19.11+incompatible // indirect
+	github.com/spf13/cobra v1.1.1
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // indirect
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/vbatts/tar-split v0.11.1 // indirect
