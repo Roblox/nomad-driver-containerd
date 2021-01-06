@@ -307,14 +307,10 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 	}
 
 	isRunning, err := d.isContainerdRunning()
-	if err != nil {
-		d.logger.Error("Error in buildFingerprint(): failed to get containerd status: %v", err)
-		fp.Health = drivers.HealthStateUndetected
-		fp.HealthDescription = "Undetected"
-		return fp
-	}
-
-	if !isRunning {
+	if err != nil || !isRunning {
+		if err != nil {
+			d.logger.Error("Error in buildFingerprint(): failed to get containerd status", "error", err)
+		}
 		fp.Health = drivers.HealthStateUnhealthy
 		fp.HealthDescription = "Unhealthy"
 		return fp
@@ -323,7 +319,7 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 	// Get containerd version
 	version, err := d.getContainerdVersion()
 	if err != nil {
-		d.logger.Warn("Error in buildFingerprint(): failed to get containerd version: %v", err)
+		d.logger.Warn("Error in buildFingerprint(): failed to get containerd version:", "error", err)
 		return fp
 	}
 
@@ -398,13 +394,13 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
 	}
 
-	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s", containerName))
+	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s\n", containerName))
 	task, err := d.createTask(container, cfg.StdoutPath, cfg.StderrPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating task: %v", err)
 	}
 
-	d.logger.Info(fmt.Sprintf("Successfully created task with ID: %s", task.ID()))
+	d.logger.Info(fmt.Sprintf("Successfully created task with ID: %s\n", task.ID()))
 
 	h := &taskHandle{
 		taskConfig:     cfg,
@@ -429,6 +425,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 
 	d.tasks.Set(cfg.ID, h)
+
 	go h.run(d.ctxContainerd)
 	return handle, nil, nil
 }
@@ -474,7 +471,10 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		return fmt.Errorf("Error in recovering task: %v", err)
 	}
 
-	status, err := task.Status(d.ctxContainerd)
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
+	defer cancel()
+
+	status, err := task.Status(ctxWithTimeout)
 	if err != nil {
 		return fmt.Errorf("Error in recovering task status: %v", err)
 	}
@@ -499,7 +499,7 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		go h.run(d.ctxContainerd)
 	}
 
-	d.logger.Info(fmt.Sprintf("Task with ID: %s recovered successfully.", handle.Config.ID))
+	d.logger.Info(fmt.Sprintf("Task with ID: %s recovered successfully.\n", handle.Config.ID))
 	return nil
 }
 
@@ -522,17 +522,15 @@ func (d *Driver) handleWait(ctx context.Context, handle *taskHandle, ch chan *dr
 	exitStatusCh, err := handle.task.Wait(d.ctxContainerd)
 	if err != nil {
 		result = &drivers.ExitResult{
-			Err: fmt.Errorf("executor: error waiting on process: %v", err),
+			ExitCode: 255,
+			Err:      fmt.Errorf("executor: error waiting on process: %v", err),
 		}
 	} else {
 		status := <-exitStatusCh
 		code, _, err := status.Result()
-		if err != nil {
-			d.logger.Error(err.Error())
-			return
-		}
 		result = &drivers.ExitResult{
 			ExitCode: int(code),
+			Err:      err,
 		}
 	}
 
@@ -607,7 +605,7 @@ func (d *Driver) TaskStats(ctx context.Context, taskID string, interval time.Dur
 		if err != nil {
 			d.logger.Warn("Error parsing driver stats interval, fallback on default interval")
 		} else {
-			msg := fmt.Sprintf("Overriding client stats interval: %v with driver stats interval: %v", interval, d.config.StatsInterval)
+			msg := fmt.Sprintf("Overriding client stats interval: %v with driver stats interval: %v\n", interval, d.config.StatsInterval)
 			d.logger.Debug(msg)
 			interval = statsInterval
 		}
