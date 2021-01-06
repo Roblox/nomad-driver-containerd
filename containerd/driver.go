@@ -309,7 +309,7 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 	isRunning, err := d.isContainerdRunning()
 	if err != nil || !isRunning {
 		if err != nil {
-			d.logger.Error(fmt.Sprintf("Error in buildFingerprint(): failed to get containerd status: %v\n", err))
+			d.logger.Error("Error in buildFingerprint(): failed to get containerd status", "error", err)
 		}
 		fp.Health = drivers.HealthStateUnhealthy
 		fp.HealthDescription = "Unhealthy"
@@ -319,7 +319,7 @@ func (d *Driver) buildFingerprint() *drivers.Fingerprint {
 	// Get containerd version
 	version, err := d.getContainerdVersion()
 	if err != nil {
-		d.logger.Warn(fmt.Sprintf("Error in buildFingerprint(): failed to get containerd version: %v\n", err))
+		d.logger.Warn("Error in buildFingerprint(): failed to get containerd version:", "error", err)
 		return fp
 	}
 
