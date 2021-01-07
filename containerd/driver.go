@@ -474,11 +474,6 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		return fmt.Errorf("failed to decode task state from handle: %v", err)
 	}
 
-	var driverConfig TaskConfig
-	if err := handle.Config.DecodeDriverConfig(&driverConfig); err != nil {
-		return fmt.Errorf("failed to decode driver config: %v", err)
-	}
-
 	container, err := d.loadContainer(taskState.ContainerName)
 	if err != nil {
 		return fmt.Errorf("Error in recovering container: %v", err)
