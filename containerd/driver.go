@@ -229,6 +229,22 @@ func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 	}
 }
 
+func (tc *TaskConfig) setVolumeMounts(cfg *drivers.TaskConfig) {
+	for _, m := range cfg.Mounts {
+		hm := Mount{
+			Type:    "bind",
+			Target:  m.TaskPath,
+			Source:  m.HostPath,
+			Options: []string{"rbind"},
+		}
+		if m.Readonly {
+			hm.Options = append(hm.Options, "ro")
+		}
+
+		tc.Mounts = append(tc.Mounts, hm)
+	}
+}
+
 // PluginInfo returns information describing the plugin.
 func (d *Driver) PluginInfo() (*base.PluginInfoResponse, error) {
 	return pluginInfo, nil
@@ -344,6 +360,8 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	if driverConfig.HostNetwork && cfg.NetworkIsolation != nil {
 		return nil, nil, fmt.Errorf("host_network and bridge network mode are mutually exclusive, and only one of them should be set")
 	}
+
+	driverConfig.setVolumeMounts(cfg)
 
 	d.logger.Info("starting task", "driver_cfg", hclog.Fmt("%+v", driverConfig))
 	handle := drivers.NewTaskHandle(taskHandleVersion)

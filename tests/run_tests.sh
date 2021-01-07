@@ -152,7 +152,7 @@ Documentation=https://nomadproject.io
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/nomad agent -dev -config=/home/circleci/go/src/github.com/Roblox/nomad-driver-containerd/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
+ExecStart=/usr/local/bin/nomad agent -dev -config=/home/circleci/go/src/github.com/Roblox/nomad-driver-containerd/example/agent_tests.hcl -plugin-dir=/tmp/nomad-driver-containerd
 KillMode=process
 Delegate=yes
 LimitNOFILE=1048576
@@ -165,10 +165,18 @@ WantedBy=multi-user.target
 EOF
 	sudo mv nomad.service /lib/systemd/system/nomad.service
 	sudo systemctl daemon-reload
+
+	prepare_nomad_host_volume
+
 	echo "INFO: Starting nomad server and nomad-driver-containerd."
 	sudo systemctl start nomad
 	is_systemd_service_active "nomad.service"
 	popd
+}
+
+prepare_nomad_host_volume() {
+	echo "INFO: Prepare nomad host volume."
+	mkdir -p /tmp/host_volume/s1
 }
 
 is_containerd_driver_active() {
