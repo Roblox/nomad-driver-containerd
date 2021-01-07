@@ -12,9 +12,6 @@ job "hello" {
       resources {
         cpu    = 500
         memory = 256
-        network {
-          mbits = 10
-        }
       }
     }
   }
