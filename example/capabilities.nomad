@@ -17,9 +17,6 @@ job "capabilities" {
       resources {
         cpu    = 500
         memory = 256
-        network {
-          mbits = 10
-        }
       }
     }
   }
