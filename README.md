@@ -118,6 +118,11 @@ mounts = [
            }
         ]
 ```
+
+In additon to the `mounts` option in `Task Config`, you can also mount your volumes into the container using nomad [`volume_mount stanza`](https://www.nomadproject.io/docs/job-specification/volume_mount)
+
+See [`example job`](https://github.com/Roblox/nomad-driver-containerd/blob/master/example/volume_mount.nomad) for `volume_mount`.
+
 **Custom seccomp profile example**
 
 The default `docker` seccomp profile found [`here`](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json)
