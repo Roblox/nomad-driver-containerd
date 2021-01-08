@@ -1,7 +1,7 @@
 # nomad-driver-containerd
 [![CircleCI](https://circleci-github.rcs.simulpong.com/gh/Roblox/nomad-driver-containerd/tree/master.svg?style=shield&circle-token=559609ed9ed99da393798c76f4db004f3cd66801)](https://circleci-github.rcs.simulpong.com/gh/Roblox/nomad-driver-containerd/tree/master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Roblox/nomad-driver-containerd/blob/master/LICENSE)
-[![Release](https://img.shields.io/badge/version-0.5-blue)](https://github.com/Roblox/nomad-driver-containerd/releases/tag/v0.5)
+[![Release](https://img.shields.io/badge/version-0.6-blue)](https://github.com/Roblox/nomad-driver-containerd/releases/tag/v0.6)
 
 <img src="images/nomad.png" width="300" height="100" />&nbsp;<img src="images/docker.png" width="150" height="100" />&nbsp;<img src="images/containerd.png" width="350" height="100" />
 
