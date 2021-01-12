@@ -36,9 +36,12 @@ type ContainerConfig struct {
 	ContainerName         string
 	ContainerSnapshotName string
 	NetworkNamespacePath  string
-	SecretsDir            string
-	TaskDir               string
-	AllocDir              string
+	SecretsDirSrc         string
+	TaskDirSrc            string
+	AllocDirSrc           string
+	SecretsDirDest        string
+	TaskDirDest           string
+	AllocDirDest          string
 	Env                   []string
 	MemoryLimit           int64
 	CPUShares             int64
@@ -165,20 +168,20 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	}
 
 	// Setup "/secrets" (NOMAD_SECRETS_DIR) in the container.
-	if containerConfig.SecretsDir != "" {
-		secretsMount := buildMountpoint("bind", "/secrets", containerConfig.SecretsDir, []string{"rbind", "ro"})
+	if containerConfig.SecretsDirSrc != "" && containerConfig.SecretsDirDest != "" {
+		secretsMount := buildMountpoint("bind", containerConfig.SecretsDirDest, containerConfig.SecretsDirSrc, []string{"rbind", "rw"})
 		mounts = append(mounts, secretsMount)
 	}
 
 	// Setup "/local" (NOMAD_TASK_DIR) in the container.
-	if containerConfig.TaskDir != "" {
-		taskMount := buildMountpoint("bind", "/local", containerConfig.TaskDir, []string{"rbind", "ro"})
+	if containerConfig.TaskDirSrc != "" && containerConfig.TaskDirDest != "" {
+		taskMount := buildMountpoint("bind", containerConfig.TaskDirDest, containerConfig.TaskDirSrc, []string{"rbind", "rw"})
 		mounts = append(mounts, taskMount)
 	}
 
 	// Setup "/alloc" (NOMAD_ALLOC_DIR) in the container.
-	if containerConfig.AllocDir != "" {
-		allocMount := buildMountpoint("bind", "/alloc", containerConfig.AllocDir, []string{"rbind", "ro"})
+	if containerConfig.AllocDirSrc != "" && containerConfig.AllocDirDest != "" {
+		allocMount := buildMountpoint("bind", containerConfig.AllocDirDest, containerConfig.AllocDirSrc, []string{"rbind", "rw"})
 		mounts = append(mounts, allocMount)
 	}
 
