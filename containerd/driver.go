@@ -29,6 +29,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	log "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/nomad/client/stats"
+	"github.com/hashicorp/nomad/client/taskenv"
 	"github.com/hashicorp/nomad/drivers/shared/eventer"
 	"github.com/hashicorp/nomad/plugins/base"
 	"github.com/hashicorp/nomad/plugins/drivers"
@@ -118,7 +119,7 @@ var (
 	capabilities = &drivers.Capabilities{
 		SendSignals:       true,
 		Exec:              true,
-		FSIsolation:       drivers.FSIsolationNone,
+		FSIsolation:       drivers.FSIsolationImage,
 		NetIsolationModes: []drivers.NetIsolationMode{drivers.NetIsolationModeGroup, drivers.NetIsolationModeTask},
 	}
 )
@@ -385,17 +386,18 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		if skipOverride(key) {
 			continue
 		}
-		if key == "NOMAD_SECRETS_DIR" {
-			containerConfig.SecretsDir = val
-		}
-		if key == "NOMAD_TASK_DIR" {
-			containerConfig.TaskDir = val
-		}
-		if key == "NOMAD_ALLOC_DIR" {
-			containerConfig.AllocDir = val
-		}
 		containerConfig.Env = append(containerConfig.Env, fmt.Sprintf("%s=%s", key, val))
 	}
+
+	// Setup source paths for secrets, task and alloc directories.
+	containerConfig.SecretsDirSrc = cfg.TaskDir().SecretsDir
+	containerConfig.TaskDirSrc = cfg.TaskDir().LocalDir
+	containerConfig.AllocDirSrc = cfg.TaskDir().SharedAllocDir
+
+	// Setup destination paths for secrets, task and alloc directories.
+	containerConfig.SecretsDirDest = cfg.Env[taskenv.SecretsDir]
+	containerConfig.TaskDirDest = cfg.Env[taskenv.TaskLocalDir]
+	containerConfig.AllocDirDest = cfg.Env[taskenv.AllocDir]
 
 	containerConfig.ContainerSnapshotName = fmt.Sprintf("%s-snapshot", containerName)
 	if cfg.NetworkIsolation != nil && cfg.NetworkIsolation.Path != "" {
