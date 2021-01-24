@@ -31,6 +31,7 @@ import (
 	"github.com/hashicorp/nomad/client/stats"
 	"github.com/hashicorp/nomad/client/taskenv"
 	"github.com/hashicorp/nomad/drivers/shared/eventer"
+	"github.com/hashicorp/nomad/drivers/shared/resolvconf"
 	"github.com/hashicorp/nomad/plugins/base"
 	"github.com/hashicorp/nomad/plugins/drivers"
 	"github.com/hashicorp/nomad/plugins/shared/hclspec"
@@ -229,7 +230,7 @@ func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 	}
 }
 
-func (tc *TaskConfig) setVolumeMounts(cfg *drivers.TaskConfig) {
+func (tc *TaskConfig) setVolumeMounts(cfg *drivers.TaskConfig) error {
 	for _, m := range cfg.Mounts {
 		hm := Mount{
 			Type:    "bind",
@@ -243,6 +244,21 @@ func (tc *TaskConfig) setVolumeMounts(cfg *drivers.TaskConfig) {
 
 		tc.Mounts = append(tc.Mounts, hm)
 	}
+
+	if cfg.DNS != nil {
+		dnsMount, err := resolvconf.GenerateDNSMount(cfg.TaskDir().Dir, cfg.DNS)
+		if err != nil {
+			return fmt.Errorf("failed to build mount for resolv.conf: %v", err)
+		}
+		tc.HostDNS = false
+		tc.Mounts = append(tc.Mounts, Mount{
+			Type:    "bind",
+			Target:  dnsMount.TaskPath,
+			Source:  dnsMount.HostPath,
+			Options: []string{"bind", "ro"},
+		})
+	}
+	return nil
 }
 
 // PluginInfo returns information describing the plugin.
@@ -361,7 +377,9 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("host_network and bridge network mode are mutually exclusive, and only one of them should be set")
 	}
 
-	driverConfig.setVolumeMounts(cfg)
+	if err := driverConfig.setVolumeMounts(cfg); err != nil {
+		return nil, nil, err
+	}
 
 	d.logger.Info("starting task", "driver_cfg", hclog.Fmt("%+v", driverConfig))
 	handle := drivers.NewTaskHandle(taskHandleVersion)
