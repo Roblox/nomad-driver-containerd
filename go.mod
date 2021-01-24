@@ -39,7 +39,6 @@ require (
 	github.com/hashicorp/nomad v0.10.1
 	github.com/hashicorp/nomad/api v0.0.0-20191203164002-b31573ae7206 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b // indirect
-	github.com/moby/moby v1.13.1
 	github.com/mrunalp/fileutils v0.0.0-20171103030105-7d4729fb3618 // indirect
 	github.com/opencontainers/runc v1.0.0-rc8.0.20190611121236-6cc515888830 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2

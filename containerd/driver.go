@@ -35,7 +35,6 @@ import (
 	"github.com/hashicorp/nomad/plugins/drivers"
 	"github.com/hashicorp/nomad/plugins/shared/hclspec"
 	"github.com/hashicorp/nomad/plugins/shared/structs"
-	"github.com/moby/moby/pkg/namesgenerator"
 )
 
 const (
@@ -368,15 +367,14 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	handle := drivers.NewTaskHandle(taskHandleVersion)
 	handle.Config = cfg
 
-	// Generate a random container name using docker namesgenerator package.
-	// https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go
-	containerName := cfg.AllocID[:8] + "_" + namesgenerator.GetRandomName(1)
+	// https://www.nomadproject.io/docs/drivers/docker#container-name
+	containerName := cfg.Name + "-" + cfg.AllocID
 	containerConfig.ContainerName = containerName
 
 	var err error
 	containerConfig.Image, err = d.pullImage(driverConfig.Image)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error in pulling image: %v", err)
+		return nil, nil, fmt.Errorf("Error in pulling image %s: %v", driverConfig.Image, err)
 	}
 
 	d.logger.Info(fmt.Sprintf("Successfully pulled %s image\n", containerConfig.Image.Name()))
