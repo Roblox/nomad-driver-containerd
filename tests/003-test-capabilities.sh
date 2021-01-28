@@ -27,17 +27,6 @@ test_capabilities_nomad_job() {
         exit 1
     fi
 
-    # Check if readonly_rootfs is set to true.
-    echo "INFO: Checking if readonly_rootfs is set to true."
-    local outfile=$(mktemp /tmp/capabilities.XXXXXX)
-    nomad alloc exec -job capabilities touch /tmp/file.txt >> $outfile 2>&1
-    if ! grep -q "Read-only file system" $outfile; then
-        echo "ERROR: readonly_rootfs is not set to true."
-        cleanup "$outfile"
-        exit 1
-    fi
-    cleanup "$outfile"
-
     # Check if CAP_SYS_ADMIN was added.
     echo "INFO: Checking if CAP_SYS_ADMIN is added."
     nomad alloc exec -job capabilities capsh --print|grep cap_sys_admin >/dev/null 2>&1
@@ -55,6 +44,17 @@ test_capabilities_nomad_job() {
         echo "ERROR: CAP_CHOWN was not dropped from the capabilities set."
         exit 1
     fi
+
+    # Check if readonly_rootfs is set to true.
+    echo "INFO: Checking if readonly_rootfs is set to true."
+    local outfile=$(mktemp /tmp/capabilities.XXXXXX)
+    nomad alloc exec -job capabilities touch /tmp/file.txt >> $outfile 2>&1
+    if ! grep -q "Read-only file system" $outfile; then
+        echo "ERROR: readonly_rootfs is not set to true."
+        cleanup "$outfile"
+        exit 1
+    fi
+    cleanup "$outfile"
 
     echo "INFO: Stopping nomad capabilities job."
     nomad job stop capabilities

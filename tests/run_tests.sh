@@ -21,6 +21,7 @@ PASS_STATUS=0
 # These tests are designed to be run as part of continous integration (CI) and not on local host.
 # Please don't run these tests (./run_tests.sh) on your local host, as these are meant to be
 # destructive and can modify (or destroy) software on your host system.
+# If you are running the tests locally, run it in the vagrant VM provided with the repository.
 main() {
 	warn_on_local_host
 	setup
@@ -62,6 +63,7 @@ warn_on_local_host() {
      echo "WARNING: Local host detected."
      echo "WARNING: These tests are designed to be run as part of continous integration (CI) and not recommended to be run on local host."
      echo "WARNING: These tests are destructive and can modify (or destroy) software on your host system."
+     echo "WARNING: If running the tests locally, run it in the vagrant VM provided with the repository."
      read -p "Do you still want to run the tests (Y/N)? " -n 1 -r
      echo
      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -72,7 +74,12 @@ warn_on_local_host() {
 }
 
 setup() {
-	sudo systemctl stop apt-daily-upgrade apt-daily >/dev/null 2>&1
+	if [[ -z "$CIRCLECI" || "$CIRCLECI" != "true" ]]; then
+           echo "INFO: Running tests on local host (vagrant VM). Setup is not required."
+           return 0
+        fi
+
+        sudo systemctl stop apt-daily-upgrade apt-daily >/dev/null 2>&1
 
 	set +e
 	sudo pkill --signal SIGKILL -P $(ps faux | grep 'daily' | awk '{print $2}')
@@ -134,7 +141,7 @@ EOF
 	sudo chmod +x /usr/local/go
 	rm -f go${GO_VERSION}.linux-amd64.tar.gz
 
-	# Install nomad 0.11.2
+	# Install nomad 1.0.2
 	curl -L -o nomad_${NOMAD_VERSION}_linux_amd64.zip https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip
 	sudo unzip -d /usr/local/bin nomad_${NOMAD_VERSION}_linux_amd64.zip
 	sudo chmod +x /usr/local/bin/nomad
@@ -156,7 +163,7 @@ Documentation=https://nomadproject.io
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/nomad agent -dev -config=$GOPATH/src/github.com/Roblox/nomad-driver-containerd/example/agent_tests.hcl -plugin-dir=/tmp/nomad-driver-containerd
+ExecStart=/usr/local/bin/nomad agent -dev -config=$GOPATH/src/github.com/Roblox/nomad-driver-containerd/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
 KillMode=process
 Delegate=yes
 LimitNOFILE=1048576
