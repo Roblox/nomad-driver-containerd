@@ -2,11 +2,15 @@
 
 set -eo pipefail
 
-export NOMAD_VERSION=0.11.2
+export NOMAD_VERSION=1.0.2
 export CONTAINERD_VERSION=1.3.4
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:/usr/local/bin
-export GOPATH=/home/circleci/go
+if [ -e /home/circleci ]; then
+	export GOPATH=/home/circleci/go
+else
+	export GOPATH=$HOME/go
+fi
 export GO_VERSION=1.14.3
 
 # Keeps track of overall pass/failure status of tests. Even if single test
@@ -152,7 +156,7 @@ Documentation=https://nomadproject.io
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/nomad agent -dev -config=/home/circleci/go/src/github.com/Roblox/nomad-driver-containerd/example/agent_tests.hcl -plugin-dir=/tmp/nomad-driver-containerd
+ExecStart=/usr/local/bin/nomad agent -dev -config=$GOPATH/src/github.com/Roblox/nomad-driver-containerd/example/agent_tests.hcl -plugin-dir=/tmp/nomad-driver-containerd
 KillMode=process
 Delegate=yes
 LimitNOFILE=1048576

@@ -18,40 +18,29 @@ require (
 	github.com/coreos/go-iptables v0.4.3 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
-	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
-	github.com/docker/cli v0.0.0-20191202230238-13fb276442f5 // indirect
-	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
-	github.com/fsouza/go-dockerclient v1.6.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/google/uuid v1.1.2 // indirect
-	github.com/hashicorp/consul v1.6.2 // indirect
-	github.com/hashicorp/consul-template v0.23.0
+	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75 // indirect
+	github.com/hashicorp/consul-template v0.25.1
 	github.com/hashicorp/go-envparse v0.0.0-20190703193109-150b3a2a4611 // indirect
-	github.com/hashicorp/go-getter v1.4.0 // indirect
-	github.com/hashicorp/go-hclog v0.10.0
-	github.com/hashicorp/go-plugin v1.0.1
+	github.com/hashicorp/go-hclog v0.12.0
+	github.com/hashicorp/go-plugin v1.0.2-0.20191004171845-809113480b55
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/hashicorp/hcl2 v0.0.0-20191002203319-fb75b3253c80 // indirect
-	github.com/hashicorp/nomad v0.10.1
-	github.com/hashicorp/nomad/api v0.0.0-20191203164002-b31573ae7206 // indirect
+	github.com/hashicorp/nomad v1.0.2
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b // indirect
-	github.com/mrunalp/fileutils v0.0.0-20171103030105-7d4729fb3618 // indirect
-	github.com/opencontainers/runc v1.0.0-rc8.0.20190611121236-6cc515888830 // indirect
-	github.com/opencontainers/runtime-spec v1.0.2
-	github.com/opencontainers/selinux v1.3.1 // indirect
-	github.com/seccomp/libseccomp-golang v0.9.1 // indirect
-	github.com/shirou/gopsutil v2.19.11+incompatible // indirect
+	github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
 	github.com/spf13/cobra v1.1.1
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // indirect
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/vbatts/tar-split v0.11.1 // indirect
-	github.com/zclconf/go-cty v1.1.1 // indirect
 	go4.org v0.0.0-20191010144846-132d2879e1e9 // indirect
 	google.golang.org/grpc v1.32.0 // indirect
+	istio.io/gogo-genproto v0.0.0-20190124151557-6d926a6e6feb // indirect
 )
 
 // use lower-case sirupsen
