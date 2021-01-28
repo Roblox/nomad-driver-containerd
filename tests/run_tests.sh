@@ -12,6 +12,8 @@ else
 	export GOPATH=$HOME/go
 fi
 export GO_VERSION=1.14.3
+export SRCDIR=`dirname $0`
+source $SRCDIR/utils.sh
 
 # Keeps track of overall pass/failure status of tests. Even if single test
 # fails, PASS_STATUS will be set to 1 and returned to caller when all
@@ -47,11 +49,10 @@ run_test () {
 }
 
 run_tests() {
-  local srcdir=`dirname $0`
   if [ $# -gt 0 ]; then
     local files=$@
   else
-    local files="$srcdir/[0-9][0-9][0-9]-test-*"
+    local files="$SRCDIR/[0-9][0-9][0-9]-test-*"
   fi
   for t in $files;do
     run_test ./$t

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source $SRCDIR/utils.sh
+
 # privileged mode, devices and mounts are tested as part of this test.
 test_privileged_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
@@ -20,7 +22,7 @@ test_privileged_nomad_job() {
     # The actual container process might not be running yet.
     # We need to wait for actual container to start running before trying exec.
     echo "INFO: Wait for privileged container to get into RUNNING state, before trying exec."
-    is_privileged_container_active
+    is_container_active privileged true
 
     echo "INFO: Inspecting privileged job."
     job_status=$(nomad job inspect privileged|jq -r '.Job .Status')
@@ -71,27 +73,6 @@ test_privileged_nomad_job() {
 setup_bind_source() {
     mkdir -p /tmp/s1
     echo hello > /tmp/s1/bind.txt
-}
-
-is_privileged_container_active() {
-        i="0"
-        while test $i -lt 5
-        do
-                sudo CONTAINERD_NAMESPACE=nomad ctr task ls|grep -q RUNNING
-                if [ $? -eq 0 ]; then
-                        echo "INFO: privileged container is up and running"
-                        sleep 5s
-                        break
-                fi
-                echo "INFO: privileged container is down, sleep for 4 seconds."
-                sleep 4s
-                i=$[$i+1]
-        done
-
-        if [ $i -ge 5 ]; then
-                echo "ERROR: privileged container didn't come up. exit 1."
-                exit 1
-        fi
 }
 
 test_privileged_nomad_job
