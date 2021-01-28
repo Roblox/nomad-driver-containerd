@@ -24,7 +24,7 @@ Docker daemon is not required on the host system.
 
 ## Requirements
 
-- [Nomad](https://www.nomadproject.io/downloads.html) >=v0.11
+- [Nomad](https://www.nomadproject.io/downloads.html) >=v1.0
 - [Go](https://golang.org/doc/install) >=v1.11
 - [Containerd](https://containerd.io/downloads/) >=1.3
 - [Vagrant](https://www.vagrantup.com/downloads.html) >=v2.2
@@ -90,14 +90,14 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **cwd** | string | no | Specify the current working directory for your container process. If the directory does not exist, one will be created for you. |
 | **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
 | **host_dns** | bool | no | Default (`true`). By default, a container launched using `containerd-driver` will use host `/etc/resolv.conf`. This is similar to [`docker behavior`](https://docs.docker.com/config/containers/container-networking/#dns-services). However, if you don't want to use host DNS, you can turn off this flag by setting `host_dns=false`. |
-| **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L390). |
+| **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L395). |
 | **seccomp_profile** | string | no | Path to custom seccomp profile. `seccomp` must be set to `true` in order to use `seccomp_profile`. The default `docker` seccomp profile found [`here`](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json) can be used as a reference, and modified to create a custom seccomp profile. |
 | **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
 | **host_network** | bool | no | Enable host network. This is equivalent to `--net=host` in docker. |
 | **cap_add** | []string | no | Add individual capabilities. |
 | **cap_drop** | []string | no | Drop invidual capabilities. |
 | **devices** | []string | no | A list of devices to be exposed to the container. |
-| **mounts** | []block | no | A list of mounts to be mounted in the container. Volume, bind and tmpfs type mounts are supported. fstab style [`mount options`](https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L187-L211) are supported. |
+| **mounts** | []block | no | A list of mounts to be mounted in the container. Volume, bind and tmpfs type mounts are supported. fstab style [`mount options`](https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L211-L235) are supported. |
 
 **Mount block**<br/>
        &emsp;&emsp;\{<br/>
@@ -219,12 +219,17 @@ A [`service`](https://www.nomadproject.io/docs/job-specification/service) stanza
 The service stanza instructs Nomad to register a service with Consul.
 
 ## Tests
+
+If you are running the tests locally, use the [`vagrant VM`](Vagrantfile) provided in the repository.
+
 ```
-$ make test
+$ vagrant up
+$ vagrant ssh containerd-linux
+$ sudo make test
 ```
 **NOTE**: These are destructive tests and can leave the system in a changed state.<br/>
-It is highly recommended to run these tests either as part of a CI/CD system or on
-a immutable infrastructure e.g VMs.
+It is highly recommended to run these tests either as part of a CI/CD system e.g. circleci or on
+a immutable infrastructure e.g vagrant VMs.
 
 ## Cleanup
 ```
