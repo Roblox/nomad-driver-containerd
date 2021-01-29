@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source $SRCDIR/utils.sh
+
 test_redis_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 
@@ -16,7 +18,7 @@ test_redis_nomad_job() {
     # The actual container process might not be running yet.
     # We need to wait for actual container to start running before trying exec.
     echo "INFO: Wait for redis container to get into RUNNING state, before trying exec."
-    is_redis_container_active
+    is_container_active redis false
 
     echo "INFO: Inspecting redis job."
     redis_status=$(nomad job inspect redis|jq -r '.Job .Status')
@@ -51,26 +53,6 @@ test_redis_nomad_job() {
     echo "INFO: purge nomad redis job."
     nomad job stop -purge redis
     popd
-}
-
-is_redis_container_active() {
-        i="0"
-        while test $i -lt 5
-        do
-                sudo CONTAINERD_NAMESPACE=nomad ctr task ls|grep -q RUNNING
-                if [ $? -eq 0 ]; then
-                        echo "INFO: redis container is up and running"
-                        break
-                fi
-                echo "INFO: redis container is down, sleep for 4 seconds."
-                sleep 4s
-                i=$[$i+1]
-        done
-
-        if [ $i -ge 5 ]; then
-                echo "ERROR: redis container didn't come up. exit 1."
-                exit 1
-        fi
 }
 
 test_redis_nomad_job

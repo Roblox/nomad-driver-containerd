@@ -7,7 +7,7 @@ main() {
   echo "WARN: Some installation steps are time consuming. Please be patient!"
 
   # Save project root directory.
-  root_dir="/home/vagrant/go/src/nomad-driver-containerd"
+  root_dir="/home/vagrant/go/src/github.com/Roblox/nomad-driver-containerd"
   pushd $root_dir >/dev/null 2>&1
   echo "INFO: Drop systemd unit containerd.service into /lib/systemd/system/containerd.service."
   drop_containerd_unit_file

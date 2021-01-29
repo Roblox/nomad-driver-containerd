@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source $SRCDIR/utils.sh
+
 job_name=volume_mount
 host_volume_path=/tmp/host_volume/s1
 
@@ -16,7 +18,7 @@ test_volume_mount_nomad_job() {
     # The actual container process might not be running yet.
     # We need to wait for actual container to start running before trying exec.
     echo "INFO: Wait for ${job_name} container to get into RUNNING state, before trying exec."
-    is_${job_name}_container_active
+    is_container_active ${job_name} true
 
     echo "INFO: Checking status of $job_name job."
     job_status=$(nomad job status -short $job_name|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
@@ -69,27 +71,6 @@ setup_bind_source() {
     rm -f ${host_volume_path}/writable_test.txt
 
     echo hello > ${host_volume_path}/bind.txt
-}
-
-is_volume_mount_container_active() {
-        i="0"
-        while test $i -lt 5
-        do
-                sudo CONTAINERD_NAMESPACE=nomad ctr task ls|grep -q RUNNING
-                if [ $? -eq 0 ]; then
-                        echo "INFO: ${job_name} container is up and running"
-                        sleep 5s
-                        break
-                fi
-                echo "INFO: ${job_name} container is down, sleep for 4 seconds."
-                sleep 4s
-                i=$[$i+1]
-        done
-
-        if [ $i -ge 5 ]; then
-                echo "ERROR: ${job_name} container didn't come up. exit 1."
-                exit 1
-        fi
 }
 
 test_volume_mount_nomad_job

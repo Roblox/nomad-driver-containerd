@@ -6,8 +6,8 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure("2") do |config|
   config.vm.define "containerd-linux"
   config.vm.box = "hashicorp/bionic64"
-  config.vm.synced_folder ".", "/home/vagrant/go/src/nomad-driver-containerd"
-  config.ssh.extra_args = ["-t", "cd /home/vagrant/go/src/nomad-driver-containerd; bash --login"]
+  config.vm.synced_folder ".", "/home/vagrant/go/src/github.com/Roblox/nomad-driver-containerd"
+  config.ssh.extra_args = ["-t", "cd /home/vagrant/go/src/github.com/Roblox/nomad-driver-containerd; bash --login"]
   config.vm.network "forwarded_port", guest: 4646, host: 4646, host_ip: "127.0.0.1"
   config.vm.provider "virtualbox" do |vb|
       vb.name = "containerd-linux"
@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
   end
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
-    apt-get install -y unzip gcc runc
+    apt-get install -y unzip gcc runc jq
     echo "export GOPATH=/home/vagrant/go" >> /home/vagrant/.bashrc
     echo "export PATH=$PATH:/usr/local/go/bin" >> /home/vagrant/.bashrc
     source /home/vagrant/.bashrc
@@ -29,12 +29,12 @@ Vagrant.configure("2") do |config|
       rm -f go1.14.3.linux-amd64.tar.gz
     fi
 
-    # Install nomad-0.11.3
+    # Install nomad-1.0.2
     if [ ! -f "/usr/bin/nomad" ]; then
-      wget --quiet https://releases.hashicorp.com/nomad/0.11.3/nomad_0.11.3_linux_amd64.zip
-      unzip nomad_0.11.3_linux_amd64.zip -d /usr/bin
+      wget --quiet https://releases.hashicorp.com/nomad/1.0.2/nomad_1.0.2_linux_amd64.zip
+      unzip nomad_1.0.2_linux_amd64.zip -d /usr/bin
       chmod +x /usr/bin/nomad
-      rm -f nomad_0.11.3_linux_amd64.zip
+      rm -f nomad_1.0.2_linux_amd64.zip
     fi
 
     # Install containerd-1.3.4
@@ -47,8 +47,11 @@ Vagrant.configure("2") do |config|
     # Create source directory for privileged.nomad example job.
     mkdir -p /tmp/s1
 
+    # Prepare nomad host volume
+    mkdir -p /tmp/host_volume/s1
+
     # Run setup
-    cd /home/vagrant/go/src/nomad-driver-containerd/vagrant
+    cd /home/vagrant/go/src/github.com/Roblox/nomad-driver-containerd/vagrant
     ./setup.sh
   SHELL
 end
