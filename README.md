@@ -41,6 +41,12 @@ $ cd nomad-driver-containerd
 $ make build (This will build your containerd-driver binary)
 ```
 
+If you want to compile for `arm64`, you can run:
+
+```
+make -f Makefile.arm64
+```
+
 ## Screencast
 [![asciicast](https://asciinema.org/a/348173.svg)](https://asciinema.org/a/348173)
 
