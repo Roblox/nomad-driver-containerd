@@ -1,9 +1,8 @@
-name: config
+name: CI
 
 on:
   pull_request:
     branches: [ master ]
-  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -12,4 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run containerd-driver integration tests
-        run: make test
+        run: |
+          mkdir -p /home/runner/go/src/github.com/Roblox
+          ln -s /home/runner/work/nomad-driver-containerd/nomad-driver-containerd /home/runner/go/src/github.com/Roblox/nomad-driver-containerd
+          cd /home/runner/go/src/github.com/Roblox/nomad-driver-containerd
+          make test
