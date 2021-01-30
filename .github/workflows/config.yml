@@ -1,0 +1,15 @@
+name: config
+
+on:
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run containerd-driver integration tests
+        run: make test
