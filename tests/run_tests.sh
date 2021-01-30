@@ -6,10 +6,10 @@ export NOMAD_VERSION=1.0.2
 export CONTAINERD_VERSION=1.3.4
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:/usr/local/bin
-if [ -e /home/circleci ]; then
-	export GOPATH=/home/circleci/go
+if [ -e /home/runner ]; then
+       export GOPATH=/home/runner/go
 else
-	export GOPATH=$HOME/go
+       export GOPATH=$HOME/go
 fi
 export GO_VERSION=1.14.3
 export SRCDIR=`dirname $0`
@@ -60,7 +60,7 @@ run_tests() {
 }
 
 warn_on_local_host() {
-  if [[ -z "$CIRCLECI" || "$CIRCLECI" != "true" ]]; then
+  if [[ -z "$GITHUB_ACTIONS" || "$GITHUB_ACTIONS" != "true" ]]; then
      echo "WARNING: Local host detected."
      echo "WARNING: These tests are designed to be run as part of continous integration (CI) and not recommended to be run on local host."
      echo "WARNING: These tests are destructive and can modify (or destroy) software on your host system."
@@ -75,7 +75,7 @@ warn_on_local_host() {
 }
 
 setup() {
-	if [[ -z "$CIRCLECI" || "$CIRCLECI" != "true" ]]; then
+	if [[ -z "$GITHUB_ACTIONS" || "$GITHUB_ACTIONS" != "true" ]]; then
            echo "INFO: Running tests on local host (vagrant VM). Setup is not required."
            return 0
         fi
@@ -128,6 +128,8 @@ EOF
 
         sudo mv containerd.service /lib/systemd/system/containerd.service
         sudo systemctl daemon-reload
+        echo "INFO: Unmask containerd.service"
+        sudo systemctl unmask containerd
         echo "INFO: Starting containerd daemon."
         sudo systemctl start containerd
 	is_systemd_service_active "containerd.service"

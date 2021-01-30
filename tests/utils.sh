@@ -11,7 +11,7 @@ is_container_active() {
                 if [ $? -eq 0 ]; then
                         echo "INFO: ${job_name} container is up and running"
 			if [ "$is_sleep" = true ]; then
-                           sleep 5s
+                           sleep 7s
 			fi
                         break
                 fi

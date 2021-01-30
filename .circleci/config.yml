@@ -1,8 +1,0 @@
-version: 2
-jobs:
-  build:
-    machine: true
-    working_directory: ~/go/src/github.com/Roblox/nomad-driver-containerd
-    steps:
-      - checkout
-      - run: make test
