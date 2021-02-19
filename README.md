@@ -2,6 +2,7 @@
 [![CI Actions Status](https://github.com/Roblox/nomad-driver-containerd/workflows/CI/badge.svg)](https://github.com/Roblox/nomad-driver-containerd/actions)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Roblox/nomad-driver-containerd/blob/master/LICENSE)
 [![Release](https://img.shields.io/badge/version-0.6-blue)](https://github.com/Roblox/nomad-driver-containerd/releases/tag/v0.6)
+[![Docs](https://img.shields.io/badge/docs-website-green.svg)](https://www.nomadproject.io/docs/drivers/external/containerd)
 
 <img src="images/nomad.png" width="300" height="100" />&nbsp;<img src="images/docker.png" width="150" height="100" />&nbsp;<img src="images/containerd.png" width="350" height="100" />
 
