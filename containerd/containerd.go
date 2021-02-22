@@ -24,6 +24,7 @@ import (
 	"syscall"
 	"time"
 
+	etchosts "github.com/Roblox/nomad-driver-containerd/etchosts"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/contrib/seccomp"
@@ -183,6 +184,31 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	if containerConfig.AllocDirSrc != "" && containerConfig.AllocDirDest != "" {
 		allocMount := buildMountpoint("bind", containerConfig.AllocDirDest, containerConfig.AllocDirSrc, []string{"rbind", "rw"})
 		mounts = append(mounts, allocMount)
+	}
+
+	var extraHostsMount specs.Mount
+	hostsFile := containerConfig.TaskDirSrc + "/etc_hosts"
+	if len(config.ExtraHosts) > 0 {
+		if config.HostNetwork {
+			if err := etchosts.CopyEtcHosts(hostsFile); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := etchosts.BuildEtcHosts(hostsFile); err != nil {
+				return nil, err
+			}
+		}
+		if err := etchosts.AddExtraHosts(hostsFile, config.ExtraHosts); err != nil {
+			return nil, err
+		}
+		extraHostsMount = buildMountpoint("bind", "/etc/hosts", hostsFile, []string{"rbind", "rw"})
+		mounts = append(mounts, extraHostsMount)
+	} else if !config.HostNetwork {
+		if err := etchosts.BuildEtcHosts(hostsFile); err != nil {
+			return nil, err
+		}
+		extraHostsMount = buildMountpoint("bind", "/etc/hosts", hostsFile, []string{"rbind", "rw"})
+		mounts = append(mounts, extraHostsMount)
 	}
 
 	if len(mounts) > 0 {
