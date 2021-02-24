@@ -101,6 +101,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **seccomp_profile** | string | no | Path to custom seccomp profile. `seccomp` must be set to `true` in order to use `seccomp_profile`. The default `docker` seccomp profile found [`here`](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json) can be used as a reference, and modified to create a custom seccomp profile. |
 | **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
 | **host_network** | bool | no | Enable host network. This is equivalent to `--net=host` in docker. |
+| **extra_hosts** | []string | no | A list of hosts, given as host:IP, to be added to /etc/hosts. |
 | **cap_add** | []string | no | Add individual capabilities. |
 | **cap_drop** | []string | no | Drop invidual capabilities. |
 | **devices** | []string | no | A list of devices to be exposed to the container. |
