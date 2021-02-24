@@ -37,7 +37,7 @@ var (
 	}
 )
 
-// BuildEtcHosts builds CONTAINER_TASK_DIR/etc_hosts with defaults.
+// BuildEtcHosts builds NOMAD_TASK_DIR/etc_hosts with defaults.
 func BuildEtcHosts(hostsFile string) error {
 	content := bytes.NewBuffer(nil)
 
@@ -51,7 +51,7 @@ func BuildEtcHosts(hostsFile string) error {
 	return ioutil.WriteFile(hostsFile, content.Bytes(), 0644)
 }
 
-// CopyEtcHosts copies /etc/hosts to CONTAINER_TASK_DIR/etc_hosts
+// CopyEtcHosts copies /etc/hosts to NOMAD_TASK_DIR/etc_hosts
 func CopyEtcHosts(hostsFile string) error {
 	srcFile, err := os.Open("/etc/hosts")
 	if err != nil {
