@@ -46,7 +46,7 @@ const (
 
 	// PluginVersion allows the client to identify and use newer versions of
 	// an installed plugin
-	PluginVersion = "v0.6.0"
+	PluginVersion = "v0.7.0"
 
 	// fingerprintPeriod is the interval at which the plugin will send
 	// fingerprint responses
