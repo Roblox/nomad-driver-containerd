@@ -47,7 +47,6 @@ func BuildEtcHosts(hostsFile string) error {
 			return err
 		}
 	}
-
 	return ioutil.WriteFile(hostsFile, content.Bytes(), 0644)
 }
 

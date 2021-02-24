@@ -186,6 +186,10 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		mounts = append(mounts, allocMount)
 	}
 
+	// User will specify extra_hosts to be added to container's /etc/hosts.
+	// If host_network=true, extra_hosts will be added to host's /etc/hosts.
+	// If host_network=false, extra hosts will be added to the default /etc/hosts provided to the container.
+	// If the user doesn't set anything (host_network, extra_hosts), a default /etc/hosts will be provided to the container.
 	var extraHostsMount specs.Mount
 	hostsFile := containerConfig.TaskDirSrc + "/etc_hosts"
 	if len(config.ExtraHosts) > 0 {
