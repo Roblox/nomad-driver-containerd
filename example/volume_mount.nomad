@@ -18,7 +18,7 @@ job "volume_mount" {
     task "volume_mount-task" {
       driver = "containerd-driver"
       config {
-        image           = "docker.io/library/ubuntu:16.04"
+        image           = "ubuntu:16.04"
         command         = "sleep"
         args            = ["600s"]
       }

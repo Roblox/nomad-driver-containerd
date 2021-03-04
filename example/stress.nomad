@@ -6,7 +6,7 @@ job "stress" {
       driver = "containerd-driver"
 
       config {
-        image = "docker.io/shm32/stress:1.0"
+        image = "shm32/stress:1.0"
       }
 
       restart {

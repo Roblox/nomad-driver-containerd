@@ -5,7 +5,7 @@ job "extra_hosts" {
     task "extra_hosts-task" {
       driver = "containerd-driver"
       config {
-        image           = "docker.io/library/ubuntu:16.04"
+        image           = "ubuntu:16.04"
         extra_hosts     = ["postgres:127.0.1.1", "redis:127.0.1.2"]
         host_network    = true
         command         = "sleep"
