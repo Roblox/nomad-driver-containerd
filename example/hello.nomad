@@ -6,7 +6,7 @@ job "hello" {
       driver = "containerd-driver"
 
       config {
-        image = "docker.io/shm32/hello:world"
+        image = "shm32/hello:world"
       }
 
       resources {

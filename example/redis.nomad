@@ -6,7 +6,7 @@ job "redis" {
       driver = "containerd-driver"
 
       config {
-        image   = "docker.io/library/redis:alpine"
+        image   = "redis:alpine"
         seccomp = true
         cwd     = "/home/redis"
       }

@@ -29,6 +29,7 @@ import (
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/oci"
+	refdocker "github.com/containerd/containerd/reference/docker"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -66,7 +67,12 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 90*time.Second)
 	defer cancel()
 
-	return d.client.Pull(ctxWithTimeout, imageName, containerd.WithPullUnpack)
+	named, err := refdocker.ParseDockerRef(imageName)
+	if err != nil {
+		return nil, err
+	}
+
+	return d.client.Pull(ctxWithTimeout, named.String(), containerd.WithPullUnpack)
 }
 
 func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
