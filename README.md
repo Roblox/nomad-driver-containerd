@@ -85,7 +85,8 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | :---: | :---: | :---: | :---: | :--- |
 | **enabled** | bool | no | true | Enable/Disable task driver. |
 | **containerd_runtime** | string | yes | N/A | Runtime for containerd e.g. `io.containerd.runc.v1` or `io.containerd.runc.v2`. |
-| **stats_interval** | string | no | 1s | Interval for collecting `TaskStats` |
+| **stats_interval** | string | no | 1s | Interval for collecting `TaskStats`. |
+| **allow_privileged** | bool | no | true | If set to `false`, driver will deny running privileged jobs. |
 
 **Task Config**
 

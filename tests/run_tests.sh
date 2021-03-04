@@ -132,7 +132,7 @@ EOF
         sudo systemctl unmask containerd
         echo "INFO: Starting containerd daemon."
         sudo systemctl start containerd
-	is_systemd_service_active "containerd.service"
+	is_systemd_service_active "containerd.service" false
 
 	# Remove default golang (1.7.3) and install a custom version (1.14.3) of golang.
 	# This is required for supporting go mod, and to be able to compile nomad-driver-containerd.
@@ -184,7 +184,7 @@ EOF
 
 	echo "INFO: Starting nomad server and nomad-driver-containerd."
 	sudo systemctl start nomad
-	is_systemd_service_active "nomad.service"
+	is_systemd_service_active "nomad.service" false
 	popd
 }
 
@@ -214,22 +214,6 @@ is_containerd_driver_active() {
 		echo "ERROR: containerd driver didn't come up. exit 1."
 		exit 1
 	fi
-}
-
-is_systemd_service_active() {
-	local service_name=$1
-	i="0"
-	while test $i -lt 5 && !(systemctl -q is-active "$service_name"); do
-		printf "INFO: %s is down, sleep for 4 seconds.\n" $service_name
-		sleep 4s
-		i=$[$i+1]
-	done
-
-	if [ $i -ge 5 ]; then
-		printf "ERROR: %s didn't come up. exit 1.\n" $service_name
-		exit 1
-	fi
-	printf "INFO: %s is up and running\n" $service_name
 }
 
 main "$@"

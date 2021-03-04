@@ -79,6 +79,10 @@ var (
 		),
 		"containerd_runtime": hclspec.NewAttr("containerd_runtime", "string", true),
 		"stats_interval":     hclspec.NewAttr("stats_interval", "string", false),
+		"allow_privileged": hclspec.NewDefault(
+			hclspec.NewAttr("allow_privileged", "bool", false),
+			hclspec.NewLiteral("true"),
+		),
 	})
 
 	// taskConfigSpec is the specification of the plugin's configuration for
@@ -130,6 +134,7 @@ type Config struct {
 	Enabled           bool   `codec:"enabled"`
 	ContainerdRuntime string `codec:"containerd_runtime"`
 	StatsInterval     string `codec:"stats_interval"`
+	AllowPrivileged   bool   `codec:"allow_privileged"`
 }
 
 // Volume, bind, and tmpfs type mounts are supported.

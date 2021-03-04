@@ -95,6 +95,10 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 
 	opts = append(opts, oci.WithImageConfigArgs(containerConfig.Image, args))
 
+	if !d.config.AllowPrivileged && config.Privileged {
+		return nil, fmt.Errorf("Running privileged jobs are not allowed. Set allow_privileged to true in plugin config to allow running privileged jobs.")
+	}
+
 	// Enable privileged mode.
 	if config.Privileged {
 		opts = append(opts, oci.WithPrivileged)
