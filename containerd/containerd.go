@@ -76,14 +76,16 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 }
 
 func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
-	if config.Command == "" && len(config.Args) > 0 {
-		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
+	if config.Command != "" && config.Entrypoint != "" {
+		return nil, fmt.Errorf("Both command and entrypoint are set. Only one of them needs to be set.")
 	}
 
-	// Command set by the user, to override entrypoint or cmd defined in the image.
+	// Entrypoint or Command set by the user, to override entrypoint or cmd defined in the image.
 	var args []string
 	if config.Command != "" {
 		args = append(args, config.Command)
+	} else if config.Entrypoint != "" {
+		args = append(args, config.Entrypoint)
 	}
 
 	// Arguments to the command set by the user.
@@ -93,7 +95,11 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 
 	var opts []oci.SpecOpts
 
-	opts = append(opts, oci.WithImageConfigArgs(containerConfig.Image, args))
+	if config.Entrypoint != "" {
+		opts = append(opts, oci.WithProcessArgs(args...))
+	} else {
+		opts = append(opts, oci.WithImageConfigArgs(containerConfig.Image, args))
+	}
 
 	if !d.config.AllowPrivileged && config.Privileged {
 		return nil, fmt.Errorf("Running privileged jobs are not allowed. Set allow_privileged to true in plugin config to allow running privileged jobs.")

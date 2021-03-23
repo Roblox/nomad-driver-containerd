@@ -103,6 +103,7 @@ var (
 			hclspec.NewLiteral("true"),
 		),
 		"extra_hosts":     hclspec.NewAttr("extra_hosts", "list(string)", false),
+		"entrypoint":      hclspec.NewAttr("entrypoint", "string", false),
 		"seccomp":         hclspec.NewAttr("seccomp", "bool", false),
 		"seccomp_profile": hclspec.NewAttr("seccomp_profile", "string", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
@@ -161,6 +162,7 @@ type TaskConfig struct {
 	Privileged     bool     `codec:"privileged"`
 	HostDNS        bool     `codec:"host_dns"`
 	ExtraHosts     []string `codec:"extra_hosts"`
+	Entrypoint     string   `codec:"entrypoint"`
 	ReadOnlyRootfs bool     `codec:"readonly_rootfs"`
 	HostNetwork    bool     `codec:"host_network"`
 	Mounts         []Mount  `codec:"mounts"`
