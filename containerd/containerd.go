@@ -96,8 +96,11 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	var opts []oci.SpecOpts
 
 	if config.Entrypoint != nil {
+		// WithProcessArgs replaces the args on the generated spec.
 		opts = append(opts, oci.WithProcessArgs(args...))
 	} else {
+		// WithImageConfigArgs configures the spec to from the configuration of an Image
+		// with additional args that replaces the CMD of the image.
 		opts = append(opts, oci.WithImageConfigArgs(containerConfig.Image, args))
 	}
 
