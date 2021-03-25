@@ -76,7 +76,7 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 }
 
 func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
-	if config.Command != "" && config.Entrypoint != "" {
+	if config.Command != "" && config.Entrypoint != nil {
 		return nil, fmt.Errorf("Both command and entrypoint are set. Only one of them needs to be set.")
 	}
 
@@ -84,8 +84,8 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	var args []string
 	if config.Command != "" {
 		args = append(args, config.Command)
-	} else if config.Entrypoint != "" {
-		args = append(args, config.Entrypoint)
+	} else if config.Entrypoint != nil && config.Entrypoint[0] != "" {
+		args = append(args, config.Entrypoint...)
 	}
 
 	// Arguments to the command set by the user.
@@ -95,7 +95,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 
 	var opts []oci.SpecOpts
 
-	if config.Entrypoint != "" {
+	if config.Entrypoint != nil {
 		opts = append(opts, oci.WithProcessArgs(args...))
 	} else {
 		opts = append(opts, oci.WithImageConfigArgs(containerConfig.Image, args))
