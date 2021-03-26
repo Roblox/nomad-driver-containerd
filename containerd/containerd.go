@@ -76,14 +76,16 @@ func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
 }
 
 func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
-	if config.Command == "" && len(config.Args) > 0 {
-		return nil, fmt.Errorf("Command is empty. Cannot set --args without --command.")
+	if config.Command != "" && config.Entrypoint != nil {
+		return nil, fmt.Errorf("Both command and entrypoint are set. Only one of them needs to be set.")
 	}
 
-	// Command set by the user, to override entrypoint or cmd defined in the image.
+	// Entrypoint or Command set by the user, to override entrypoint or cmd defined in the image.
 	var args []string
 	if config.Command != "" {
 		args = append(args, config.Command)
+	} else if config.Entrypoint != nil && config.Entrypoint[0] != "" {
+		args = append(args, config.Entrypoint...)
 	}
 
 	// Arguments to the command set by the user.
@@ -93,7 +95,14 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 
 	var opts []oci.SpecOpts
 
-	opts = append(opts, oci.WithImageConfigArgs(containerConfig.Image, args))
+	if config.Entrypoint != nil {
+		// WithProcessArgs replaces the args on the generated spec.
+		opts = append(opts, oci.WithProcessArgs(args...))
+	} else {
+		// WithImageConfigArgs configures the spec to from the configuration of an Image
+		// with additional args that replaces the CMD of the image.
+		opts = append(opts, oci.WithImageConfigArgs(containerConfig.Image, args))
+	}
 
 	if !d.config.AllowPrivileged && config.Privileged {
 		return nil, fmt.Errorf("Running privileged jobs are not allowed. Set allow_privileged to true in plugin config to allow running privileged jobs.")
