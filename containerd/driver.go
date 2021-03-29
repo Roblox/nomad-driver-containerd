@@ -98,6 +98,7 @@ var (
 		"cwd":        hclspec.NewAttr("cwd", "string", false),
 		"devices":    hclspec.NewAttr("devices", "list(string)", false),
 		"privileged": hclspec.NewAttr("privileged", "bool", false),
+		"pids_limit": hclspec.NewAttr("pids_limit", "number", false),
 		"host_dns": hclspec.NewDefault(
 			hclspec.NewAttr("host_dns", "bool", false),
 			hclspec.NewLiteral("true"),
@@ -160,6 +161,7 @@ type TaskConfig struct {
 	Seccomp        bool     `codec:"seccomp"`
 	SeccompProfile string   `codec:"seccomp_profile"`
 	Privileged     bool     `codec:"privileged"`
+	PidsLimit      int64    `codec:"pids_limit"`
 	HostDNS        bool     `codec:"host_dns"`
 	ExtraHosts     []string `codec:"extra_hosts"`
 	Entrypoint     []string `codec:"entrypoint"`
