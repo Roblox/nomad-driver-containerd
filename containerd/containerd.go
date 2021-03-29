@@ -113,6 +113,11 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		opts = append(opts, oci.WithPrivileged)
 	}
 
+	// WithPidsLimit sets the container's pid limit or maximum
+	if config.PidsLimit > 0 {
+		opts = append(opts, oci.WithPidsLimit(config.PidsLimit))
+	}
+
 	if !config.Seccomp && config.SeccompProfile != "" {
 		return nil, fmt.Errorf("seccomp must be set to true, if using a custom seccomp_profile.")
 	}
