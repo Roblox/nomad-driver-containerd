@@ -32,6 +32,7 @@ import (
 	"github.com/hashicorp/nomad/client/taskenv"
 	"github.com/hashicorp/nomad/drivers/shared/eventer"
 	"github.com/hashicorp/nomad/drivers/shared/resolvconf"
+	"github.com/hashicorp/nomad/helper/pluginutils/hclutils"
 	"github.com/hashicorp/nomad/plugins/base"
 	"github.com/hashicorp/nomad/plugins/drivers"
 	"github.com/hashicorp/nomad/plugins/shared/hclspec"
@@ -107,6 +108,7 @@ var (
 		"entrypoint":      hclspec.NewAttr("entrypoint", "list(string)", false),
 		"seccomp":         hclspec.NewAttr("seccomp", "bool", false),
 		"seccomp_profile": hclspec.NewAttr("seccomp_profile", "string", false),
+		"sysctl":          hclspec.NewAttr("sysctl", "list(map(string))", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
 		"host_network":    hclspec.NewAttr("host_network", "bool", false),
 		"mounts": hclspec.NewBlockList("mounts", hclspec.NewObject(map[string]*hclspec.Spec{
@@ -151,23 +153,24 @@ type Mount struct {
 // TaskConfig contains configuration information for a task that runs with
 // this plugin
 type TaskConfig struct {
-	Image          string   `codec:"image"`
-	Command        string   `codec:"command"`
-	Args           []string `codec:"args"`
-	CapAdd         []string `codec:"cap_add"`
-	CapDrop        []string `codec:"cap_drop"`
-	Cwd            string   `codec:"cwd"`
-	Devices        []string `codec:"devices"`
-	Seccomp        bool     `codec:"seccomp"`
-	SeccompProfile string   `codec:"seccomp_profile"`
-	Privileged     bool     `codec:"privileged"`
-	PidsLimit      int64    `codec:"pids_limit"`
-	HostDNS        bool     `codec:"host_dns"`
-	ExtraHosts     []string `codec:"extra_hosts"`
-	Entrypoint     []string `codec:"entrypoint"`
-	ReadOnlyRootfs bool     `codec:"readonly_rootfs"`
-	HostNetwork    bool     `codec:"host_network"`
-	Mounts         []Mount  `codec:"mounts"`
+	Image          string             `codec:"image"`
+	Command        string             `codec:"command"`
+	Args           []string           `codec:"args"`
+	CapAdd         []string           `codec:"cap_add"`
+	CapDrop        []string           `codec:"cap_drop"`
+	Cwd            string             `codec:"cwd"`
+	Devices        []string           `codec:"devices"`
+	Seccomp        bool               `codec:"seccomp"`
+	SeccompProfile string             `codec:"seccomp_profile"`
+	Sysctl         hclutils.MapStrStr `codec:"sysctl"`
+	Privileged     bool               `codec:"privileged"`
+	PidsLimit      int64              `codec:"pids_limit"`
+	HostDNS        bool               `codec:"host_dns"`
+	ExtraHosts     []string           `codec:"extra_hosts"`
+	Entrypoint     []string           `codec:"entrypoint"`
+	ReadOnlyRootfs bool               `codec:"readonly_rootfs"`
+	HostNetwork    bool               `codec:"host_network"`
+	Mounts         []Mount            `codec:"mounts"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to

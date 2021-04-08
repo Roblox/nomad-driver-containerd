@@ -47,6 +47,20 @@ test_dns_nomad_job() {
        return 1
     fi
 
+    echo "INFO: Checking sysctl net.core.somaxconn=16384"
+    output=$(nomad alloc exec -job ${job_name} cat /proc/sys/net/core/somaxconn)
+    if [ "$output" != "16384" ];then
+        echo "ERROR: Job ${job_name}: sysctl net.core.somaxconn=16384 not found."
+        return 1
+    fi
+
+    echo "INFO: Checking sysctl net.ipv4.ip_forward=1"
+    output=$(nomad alloc exec -job ${job_name} cat /proc/sys/net/ipv4/ip_forward)
+    if [ "$output" != "1" ];then
+        echo "ERROR: Job ${job_name}: sysctl net.ipv4.ip_forward=1 not found."
+        return 1
+    fi
+
     echo "INFO: Stopping nomad ${job_name} job."
     nomad job stop ${job_name}
     job_status=$(nomad job status -short ${job_name}|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')

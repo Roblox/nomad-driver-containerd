@@ -20,8 +20,6 @@ package containerd
 import (
 	"context"
 	"fmt"
-	"os"
-	"syscall"
 	"time"
 
 	etchosts "github.com/Roblox/nomad-driver-containerd/etchosts"
@@ -116,6 +114,11 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	// WithPidsLimit sets the container's pid limit or maximum
 	if config.PidsLimit > 0 {
 		opts = append(opts, oci.WithPidsLimit(config.PidsLimit))
+	}
+
+	// Set sysctls
+	if len(config.Sysctl) > 0 {
+		opts = append(opts, WithSysctls(config.Sysctl))
 	}
 
 	if !config.Seccomp && config.SeccompProfile != "" {
@@ -265,16 +268,6 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	)
 }
 
-// buildMountpoint builds the mount point for the container.
-func buildMountpoint(mountType, mountTarget, mountSource string, mountOptions []string) specs.Mount {
-	m := specs.Mount{}
-	m.Type = mountType
-	m.Destination = mountTarget
-	m.Source = mountSource
-	m.Options = mountOptions
-	return m
-}
-
 func (d *Driver) loadContainer(id string) (containerd.Container, error) {
 	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
 	defer cancel()
@@ -297,12 +290,6 @@ func (d *Driver) createTask(container containerd.Container, stdoutPath, stderrPa
 	defer cancel()
 
 	return container.NewTask(ctxWithTimeout, cio.NewCreator(cio.WithStreams(nil, stdout, stderr)))
-}
-
-// FIFO's are named pipes in linux.
-// openFIFO() opens the nomad task stdout/stderr pipes and returns the fd.
-func openFIFO(path string) (*os.File, error) {
-	return os.OpenFile(path, os.O_RDWR|syscall.O_NONBLOCK, 0600)
 }
 
 func (d *Driver) getTask(container containerd.Container) (containerd.Task, error) {
