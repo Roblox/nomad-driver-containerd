@@ -104,6 +104,10 @@ var (
 			hclspec.NewAttr("host_dns", "bool", false),
 			hclspec.NewLiteral("true"),
 		),
+		"image_pull_timeout": hclspec.NewDefault(
+			hclspec.NewAttr("image_pull_timeout", "string", false),
+			hclspec.NewLiteral(`"5m"`),
+		),
 		"extra_hosts":     hclspec.NewAttr("extra_hosts", "list(string)", false),
 		"entrypoint":      hclspec.NewAttr("entrypoint", "list(string)", false),
 		"seccomp":         hclspec.NewAttr("seccomp", "bool", false),
@@ -153,24 +157,25 @@ type Mount struct {
 // TaskConfig contains configuration information for a task that runs with
 // this plugin
 type TaskConfig struct {
-	Image          string             `codec:"image"`
-	Command        string             `codec:"command"`
-	Args           []string           `codec:"args"`
-	CapAdd         []string           `codec:"cap_add"`
-	CapDrop        []string           `codec:"cap_drop"`
-	Cwd            string             `codec:"cwd"`
-	Devices        []string           `codec:"devices"`
-	Seccomp        bool               `codec:"seccomp"`
-	SeccompProfile string             `codec:"seccomp_profile"`
-	Sysctl         hclutils.MapStrStr `codec:"sysctl"`
-	Privileged     bool               `codec:"privileged"`
-	PidsLimit      int64              `codec:"pids_limit"`
-	HostDNS        bool               `codec:"host_dns"`
-	ExtraHosts     []string           `codec:"extra_hosts"`
-	Entrypoint     []string           `codec:"entrypoint"`
-	ReadOnlyRootfs bool               `codec:"readonly_rootfs"`
-	HostNetwork    bool               `codec:"host_network"`
-	Mounts         []Mount            `codec:"mounts"`
+	Image            string             `codec:"image"`
+	Command          string             `codec:"command"`
+	Args             []string           `codec:"args"`
+	CapAdd           []string           `codec:"cap_add"`
+	CapDrop          []string           `codec:"cap_drop"`
+	Cwd              string             `codec:"cwd"`
+	Devices          []string           `codec:"devices"`
+	Seccomp          bool               `codec:"seccomp"`
+	SeccompProfile   string             `codec:"seccomp_profile"`
+	Sysctl           hclutils.MapStrStr `codec:"sysctl"`
+	Privileged       bool               `codec:"privileged"`
+	PidsLimit        int64              `codec:"pids_limit"`
+	HostDNS          bool               `codec:"host_dns"`
+	ImagePullTimeout string             `codec:"image_pull_timeout"`
+	ExtraHosts       []string           `codec:"extra_hosts"`
+	Entrypoint       []string           `codec:"entrypoint"`
+	ReadOnlyRootfs   bool               `codec:"readonly_rootfs"`
+	HostNetwork      bool               `codec:"host_network"`
+	Mounts           []Mount            `codec:"mounts"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
@@ -404,7 +409,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	containerConfig.ContainerName = containerName
 
 	var err error
-	containerConfig.Image, err = d.pullImage(driverConfig.Image)
+	containerConfig.Image, err = d.pullImage(driverConfig.Image, driverConfig.ImagePullTimeout)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in pulling image %s: %v", driverConfig.Image, err)
 	}
