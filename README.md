@@ -93,6 +93,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | Option | Type | Required | Description |
 | :---: | :---: | :---: | :--- |
 | **image** | string | yes | OCI image (docker is also OCI compatible) for your container. |
+| **image_pull_timeout** | string | no | A time duration that controls how long `containerd-driver` will wait before cancelling an in-progress pull of the OCI image as specified in `image`. Defaults to `"5m"`. |
 | **command** | string | no | Command to override command defined in the image. |
 | **args** | []string | no | Arguments to the command. |
 | **entrypoint** | []string | no | A string list overriding the image's entrypoint. |

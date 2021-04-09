@@ -61,8 +61,13 @@ func (d *Driver) getContainerdVersion() (containerd.Version, error) {
 	return d.client.Version(ctxWithTimeout)
 }
 
-func (d *Driver) pullImage(imageName string) (containerd.Image, error) {
-	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 90*time.Second)
+func (d *Driver) pullImage(imageName, imagePullTimeout string) (containerd.Image, error) {
+	pullTimeout, err := time.ParseDuration(imagePullTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse image_pull_timeout: %v", err)
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, pullTimeout)
 	defer cancel()
 
 	named, err := refdocker.ParseDockerRef(imageName)
