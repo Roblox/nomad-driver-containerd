@@ -6,9 +6,10 @@ job "redis" {
       driver = "containerd-driver"
 
       config {
-        image   = "redis:alpine"
-        seccomp = true
-        cwd     = "/home/redis"
+        image    = "redis:alpine"
+        hostname = "foobar"
+        seccomp  = true
+        cwd      = "/home/redis"
       }
 
       resources {

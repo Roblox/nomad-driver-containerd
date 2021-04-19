@@ -34,6 +34,13 @@ test_redis_nomad_job() {
         exit 1
     fi
 
+    echo "INFO: Exec redis job and check hostname is foobar."
+    hostname=$(nomad alloc exec -job redis hostname)
+    if [ $hostname != "foobar" ]; then
+        echo "ERROR: hostname is not foobar."
+        exit 1
+    fi
+
     echo "INFO: Check if default seccomp is enabled."
     output=$(nomad alloc exec -job redis cat /proc/1/status | grep Seccomp)
     seccomp_code=$(echo $output|cut -d' ' -f2)
