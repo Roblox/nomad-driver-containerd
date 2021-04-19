@@ -100,6 +100,7 @@ var (
 		"devices":    hclspec.NewAttr("devices", "list(string)", false),
 		"privileged": hclspec.NewAttr("privileged", "bool", false),
 		"pids_limit": hclspec.NewAttr("pids_limit", "number", false),
+		"hostname":   hclspec.NewAttr("hostname", "string", false),
 		"host_dns": hclspec.NewDefault(
 			hclspec.NewAttr("host_dns", "bool", false),
 			hclspec.NewLiteral("true"),
@@ -169,6 +170,7 @@ type TaskConfig struct {
 	Sysctl           hclutils.MapStrStr `codec:"sysctl"`
 	Privileged       bool               `codec:"privileged"`
 	PidsLimit        int64              `codec:"pids_limit"`
+	Hostname         string             `codec:"hostname"`
 	HostDNS          bool               `codec:"host_dns"`
 	ImagePullTimeout string             `codec:"image_pull_timeout"`
 	ExtraHosts       []string           `codec:"extra_hosts"`
