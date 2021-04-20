@@ -176,6 +176,13 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	// Set CPU Shares.
 	opts = append(opts, oci.WithCPUShares(uint64(containerConfig.CPUShares)))
 
+	// Set Hostname
+	hostname := containerConfig.ContainerName
+	if config.Hostname != "" {
+		hostname = config.Hostname
+	}
+	opts = append(opts, oci.WithHostname(hostname))
+
 	// Add linux devices into the container.
 	for _, device := range config.Devices {
 		opts = append(opts, oci.WithLinuxDevice(device, "rwm"))
