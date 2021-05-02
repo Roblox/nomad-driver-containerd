@@ -1,5 +1,24 @@
 #!/bin/bash
 
+wait_nomad_job_status() {
+	local job_name=$1
+	local expected_status="$2"
+
+	local status
+	local i=0
+	while [ $i -lt 5 ]; do
+		status=$(nomad job status $job_name|grep Allocations -A2|tail -n 1 |awk '{print $6}')
+		if [ "$status" == "$expected_status" ]; then
+			return
+		fi
+		sleep 4
+		i=$((i + 1))
+	done
+
+	echo "ERROR: ${job_name} didn't enter $expected_status status. exit 1."
+	exit 1
+}
+
 is_container_active() {
 	local job_name=$1
 	local is_sleep=$2
