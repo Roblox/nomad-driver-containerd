@@ -239,7 +239,7 @@ You can also read more about `network stanza` in the [`nomad official documentat
 
 Nomad schedules workloads of various types across a cluster of generic hosts. Because of this, placement is not known in advance and you will need to use service discovery to connect tasks to other services deployed across your cluster. Nomad integrates with Consul to provide service discovery and monitoring.
 
-A [`service`](https://www.nomadproject.io/docs/job-specification/service) stanza can be added to your job spec, to enable service discovery. 
+A [`service`](https://www.nomadproject.io/docs/job-specification/service) stanza can be added to your job spec, to enable service discovery.
 
 The service stanza instructs Nomad to register a service with Consul.
 
@@ -256,10 +256,17 @@ $ sudo make test
 It is highly recommended to run these tests either as part of a CI/CD system e.g. circleci or on
 a immutable infrastructure e.g vagrant VMs.
 
+You can also run an individual test by specifying the test name. e.g.
+
+```
+$ cd tests
+$ sudo ./run_tests.sh 001-test-redis.sh
+```
+
 ## Cleanup
 ```
 make clean
-``` 
+```
 This will delete your binary: `containerd-driver`
 
 ```

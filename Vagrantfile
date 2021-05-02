@@ -6,6 +6,10 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure("2") do |config|
   config.vm.define "containerd-linux"
   config.vm.box = "hashicorp/bionic64"
+  config.vm.provider "libvirt" do |v, override|
+    override.vm.box = "generic/debian10"
+    override.vm.synced_folder ".", "/home/vagrant/go/src/github.com/Roblox/nomad-driver-containerd", type: "nfs", nfs_version: 4, nfs_udp: false
+  end
   config.vm.synced_folder ".", "/home/vagrant/go/src/github.com/Roblox/nomad-driver-containerd"
   config.ssh.extra_args = ["-t", "cd /home/vagrant/go/src/github.com/Roblox/nomad-driver-containerd; bash --login"]
   config.vm.network "forwarded_port", guest: 4646, host: 4646, host_ip: "127.0.0.1"
@@ -20,6 +24,8 @@ Vagrant.configure("2") do |config|
     echo "export GOPATH=/home/vagrant/go" >> /home/vagrant/.bashrc
     echo "export PATH=$PATH:/usr/local/go/bin" >> /home/vagrant/.bashrc
     source /home/vagrant/.bashrc
+    # without keeping HOME env, 'sudo make test' will try to find files under /root/go/
+    echo "Defaults env_keep += HOME" | sudo tee /etc/sudoers.d/keep_home
 
     # Install golang-1.14.3
     if [ ! -f "/usr/local/go/bin/go" ]; then
