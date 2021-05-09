@@ -116,6 +116,10 @@ var (
 		"sysctl":          hclspec.NewAttr("sysctl", "list(map(string))", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
 		"host_network":    hclspec.NewAttr("host_network", "bool", false),
+		"auth": hclspec.NewBlock("auth", false, hclspec.NewObject(map[string]*hclspec.Spec{
+			"username": hclspec.NewAttr("username", "string", false),
+			"password": hclspec.NewAttr("password", "string", false),
+		})),
 		"mounts": hclspec.NewBlockList("mounts", hclspec.NewObject(map[string]*hclspec.Spec{
 			"type": hclspec.NewDefault(
 				hclspec.NewAttr("type", "string", false),
@@ -155,6 +159,12 @@ type Mount struct {
 	Options []string `codec:"options"`
 }
 
+// Auth info to pull image from registry.
+type RegistryAuth struct {
+	Username string `codec:"username"`
+	Password string `codec:"password"`
+}
+
 // TaskConfig contains configuration information for a task that runs with
 // this plugin
 type TaskConfig struct {
@@ -177,6 +187,7 @@ type TaskConfig struct {
 	Entrypoint       []string           `codec:"entrypoint"`
 	ReadOnlyRootfs   bool               `codec:"readonly_rootfs"`
 	HostNetwork      bool               `codec:"host_network"`
+	Auth             RegistryAuth       `codec:"auth"`
 	Mounts           []Mount            `codec:"mounts"`
 }
 
@@ -411,7 +422,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	containerConfig.ContainerName = containerName
 
 	var err error
-	containerConfig.Image, err = d.pullImage(driverConfig.Image, driverConfig.ImagePullTimeout)
+	containerConfig.Image, err = d.pullImage(driverConfig.Image, driverConfig.ImagePullTimeout, &driverConfig.Auth)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in pulling image %s: %v", driverConfig.Image, err)
 	}

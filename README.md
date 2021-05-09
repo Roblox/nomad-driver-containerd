@@ -111,6 +111,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **cap_add** | []string | no | Add individual capabilities. |
 | **cap_drop** | []string | no | Drop invidual capabilities. |
 | **devices** | []string | no | A list of devices to be exposed to the container. |
+| **auth** | block | no | Provide authentication for a private registry. See [Auth](#auth) for more details. |
 | **mounts** | []block | no | A list of mounts to be mounted in the container. Volume, bind and tmpfs type mounts are supported. fstab style [`mount options`](https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L211-L235) are supported. |
 
 **Mount block**<br/>
@@ -158,6 +159,21 @@ config {
   sysctl = {
     "net.core.somaxconn"  = "16384"
     "net.ipv4.ip_forward" = "1"
+  }
+}
+```
+
+### auth
+
+If you want to pull from a private repository e.g. docker hub, you can specify `username` and `password` in the `auth` stanza. See example below.
+
+**NOTE**: In the below example, `user` and `pass` are just placeholder values which need to be replaced by actual `username` and `password`, when specifying the credentials.
+
+```
+config {
+  auth {
+    username = "user"
+    password = "pass"
   }
 }
 ```

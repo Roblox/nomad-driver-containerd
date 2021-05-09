@@ -28,6 +28,7 @@ import (
 	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/oci"
 	refdocker "github.com/containerd/containerd/reference/docker"
+	remotesdocker "github.com/containerd/containerd/remotes/docker"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -61,7 +62,26 @@ func (d *Driver) getContainerdVersion() (containerd.Version, error) {
 	return d.client.Version(ctxWithTimeout)
 }
 
-func (d *Driver) pullImage(imageName, imagePullTimeout string) (containerd.Image, error) {
+type CredentialsOpt func(string) (string, string, error)
+
+func parshAuth(auth *RegistryAuth) CredentialsOpt {
+	return func(string) (string, string, error) {
+		if auth == nil {
+			return "", "", nil
+		}
+		return auth.Username, auth.Password, nil
+	}
+}
+
+func withResolver(creds CredentialsOpt) containerd.RemoteOpt {
+	resolver := remotesdocker.NewResolver(remotesdocker.ResolverOptions{
+		Hosts: remotesdocker.ConfigureDefaultRegistries(remotesdocker.WithAuthorizer(
+			remotesdocker.NewAuthorizer(nil, creds))),
+	})
+	return containerd.WithResolver(resolver)
+}
+
+func (d *Driver) pullImage(imageName, imagePullTimeout string, auth *RegistryAuth) (containerd.Image, error) {
 	pullTimeout, err := time.ParseDuration(imagePullTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse image_pull_timeout: %v", err)
@@ -75,7 +95,12 @@ func (d *Driver) pullImage(imageName, imagePullTimeout string) (containerd.Image
 		return nil, err
 	}
 
-	return d.client.Pull(ctxWithTimeout, named.String(), containerd.WithPullUnpack)
+	pullOpts := []containerd.RemoteOpt{
+		containerd.WithPullUnpack,
+		withResolver(parshAuth(auth)),
+	}
+
+	return d.client.Pull(ctxWithTimeout, named.String(), pullOpts...)
 }
 
 func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
