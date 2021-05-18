@@ -60,3 +60,28 @@ func WithSysctls(sysctls map[string]string) oci.SpecOpts {
 		return nil
 	}
 }
+
+// WithMemoryLimits accepts soft (`memory`) and hard (`memory_max`) limits as parameters and set the desired
+// limits. With `Nomad<1.1.0` releases, soft (`memory`) will act as a hard limit, and if the container process exceeds
+// that limit, it will be OOM'ed. With `Nomad>=1.1.0` releases, users can over-provision using `soft` and `hard`
+// limits.  The container process will only get OOM'ed if the hard limit is exceeded.
+func WithMemoryLimits(soft, hard int64) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *oci.Spec) error {
+		if s.Linux != nil {
+			if s.Linux.Resources == nil {
+				s.Linux.Resources = &specs.LinuxResources{}
+			}
+			if s.Linux.Resources.Memory == nil {
+				s.Linux.Resources.Memory = &specs.LinuxMemory{}
+			}
+
+			if hard > 0 {
+				s.Linux.Resources.Memory.Limit = &hard
+				s.Linux.Resources.Memory.Reservation = &soft
+			} else {
+				s.Linux.Resources.Memory.Limit = &soft
+			}
+		}
+		return nil
+	}
+}

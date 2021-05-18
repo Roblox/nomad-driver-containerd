@@ -45,6 +45,7 @@ type ContainerConfig struct {
 	AllocDirDest          string
 	Env                   []string
 	MemoryLimit           int64
+	MemoryHardLimit       int64
 	CPUShares             int64
 }
 
@@ -196,7 +197,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	opts = append(opts, oci.WithEnv(containerConfig.Env))
 
 	// Set cgroups memory limit.
-	opts = append(opts, oci.WithMemoryLimit(uint64(containerConfig.MemoryLimit)))
+	opts = append(opts, WithMemoryLimits(containerConfig.MemoryLimit, containerConfig.MemoryHardLimit))
 
 	// Set CPU Shares.
 	opts = append(opts, oci.WithCPUShares(uint64(containerConfig.CPUShares)))
