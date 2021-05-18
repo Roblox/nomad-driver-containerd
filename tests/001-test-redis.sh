@@ -49,6 +49,19 @@ test_redis_nomad_job() {
        exit 1
     fi
 
+    echo "INFO: Check if memory and memory_max are set correctly in the cgroup filesystem."
+    task_name=$(sudo CONTAINERD_NAMESPACE=nomad ctr containers ls|awk 'NR!=1'|cut -d' ' -f1)
+    memory_soft_limit=$(sudo cat /sys/fs/cgroup/memory/nomad/$task_name/memory.soft_limit_in_bytes)
+    if [ $memory_soft_limit != "$(( 256 * 1024 * 1024 ))" ]; then
+       echo "ERROR: memory should be 256 MB. Found ${memory_soft_limit}."
+       exit 1
+    fi
+    memory_hard_limit=$(sudo cat /sys/fs/cgroup/memory/nomad/$task_name/memory.limit_in_bytes)
+    if [ $memory_hard_limit != "$(( 512 * 1024 * 1024 ))" ]; then
+       echo "ERROR: memory_max should be 512 MB. Found ${memory_hard_limit}."
+       exit 1
+    fi
+
     echo "INFO: Stopping nomad redis job."
     nomad job stop redis
     redis_status=$(nomad job status -short redis|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
