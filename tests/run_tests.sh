@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-export NOMAD_VERSION=1.0.2
+export NOMAD_VERSION=1.1.0
 export CONTAINERD_VERSION=1.3.4
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:/usr/local/bin
@@ -144,7 +144,7 @@ EOF
 	sudo chmod +x /usr/local/go
 	rm -f go${GO_VERSION}.linux-amd64.tar.gz
 
-	# Install nomad 1.0.2
+	# Install nomad 1.1.0
 	curl -L -o nomad_${NOMAD_VERSION}_linux_amd64.zip https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip
 	sudo unzip -d /usr/local/bin nomad_${NOMAD_VERSION}_linux_amd64.zip
 	sudo chmod +x /usr/local/bin/nomad

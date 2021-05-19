@@ -454,7 +454,8 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 
 	// memory and cpu are coming from the resources stanza of the nomad job.
 	// https://www.nomadproject.io/docs/job-specification/resources
-	containerConfig.MemoryLimit = cfg.Resources.LinuxResources.MemoryLimitBytes
+	containerConfig.MemoryLimit = cfg.Resources.NomadResources.Memory.MemoryMB * 1024 * 1024
+	containerConfig.MemoryHardLimit = cfg.Resources.NomadResources.Memory.MemoryMaxMB * 1024 * 1024
 	containerConfig.CPUShares = cfg.Resources.LinuxResources.CPUShares
 
 	container, err := d.createContainer(&containerConfig, &driverConfig)
