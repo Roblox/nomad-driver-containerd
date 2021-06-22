@@ -65,12 +65,20 @@ func (d *Driver) getContainerdVersion() (containerd.Version, error) {
 
 type CredentialsOpt func(string) (string, string, error)
 
-func parshAuth(auth *RegistryAuth) CredentialsOpt {
+func (d *Driver) parshAuth(auth *RegistryAuth) CredentialsOpt {
 	return func(string) (string, string, error) {
-		if auth == nil {
-			return "", "", nil
+		var username, password string
+		if d.config.Auth.Username != "" && d.config.Auth.Password != "" {
+			username = d.config.Auth.Username
+			password = d.config.Auth.Password
 		}
-		return auth.Username, auth.Password, nil
+
+		// Job auth will take precedence over plugin auth options.
+		if auth.Username != "" && auth.Password != "" {
+			username = auth.Username
+			password = auth.Password
+		}
+		return username, password, nil
 	}
 }
 
@@ -98,7 +106,7 @@ func (d *Driver) pullImage(imageName, imagePullTimeout string, auth *RegistryAut
 
 	pullOpts := []containerd.RemoteOpt{
 		containerd.WithPullUnpack,
-		withResolver(parshAuth(auth)),
+		withResolver(d.parshAuth(auth)),
 	}
 
 	return d.client.Pull(ctxWithTimeout, named.String(), pullOpts...)

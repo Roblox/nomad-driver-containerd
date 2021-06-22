@@ -80,20 +80,6 @@ setup() {
            return 0
         fi
 
-        sudo systemctl stop apt-daily-upgrade apt-daily >/dev/null 2>&1
-
-	set +e
-	sudo pkill --signal SIGKILL -P $(ps faux | grep 'daily' | awk '{print $2}')
-	set -e
-
-	# Remove docker daemon and containerd.
-	sudo systemctl stop docker
-	sudo systemctl stop containerd
-	sudo apt-get purge -y docker-ce docker-ce-cli containerd.io
-
-	sudo apt-get update
-	sudo apt-get install -y apt-utils curl runc unzip make build-essential
-
 	# Change $(pwd) to /tmp
 	pushd /tmp
 
