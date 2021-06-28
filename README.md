@@ -87,6 +87,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **containerd_runtime** | string | yes | N/A | Runtime for containerd e.g. `io.containerd.runc.v1` or `io.containerd.runc.v2`. |
 | **stats_interval** | string | no | 1s | Interval for collecting `TaskStats`. |
 | **allow_privileged** | bool | no | true | If set to `false`, driver will deny running privileged jobs. |
+| **auth** | block | no | N/A | Provide authentication for a private registry. See [Authentication](#authentication-private-registry) for more details. |
 
 **Task Config**
 
@@ -111,7 +112,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **cap_add** | []string | no | Add individual capabilities. |
 | **cap_drop** | []string | no | Drop invidual capabilities. |
 | **devices** | []string | no | A list of devices to be exposed to the container. |
-| **auth** | block | no | Provide authentication for a private registry. See [Auth](#auth) for more details. |
+| **auth** | block | no | Provide authentication for a private registry. See [Authentication](#authentication-private-registry) for more details. |
 | **mounts** | []block | no | A list of mounts to be mounted in the container. Volume, bind and tmpfs type mounts are supported. fstab style [`mount options`](https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L211-L235) are supported. |
 
 **Mount block**<br/>
@@ -163,18 +164,19 @@ config {
 }
 ```
 
-### auth
+## Authentication (Private registry)
 
-If you want to pull from a private repository e.g. docker hub, you can specify `username` and `password` in the `auth` stanza. See example below.
+`auth` stanza allow you to set credentials for your private registry e.g. if you want to pull
+an image from a private repository in docker hub.<br/>
+`auth` stanza can be set either in `Driver Config` or `Task Config` or both.<br/>
+If set at both places, `Task Config` auth will take precedence over `Driver Config` auth.
 
-**NOTE**: In the below example, `user` and `pass` are just placeholder values which need to be replaced by actual `username` and `password`, when specifying the credentials.
+**NOTE**: In the below example, `user` and `pass` are just placeholder values which need to be replaced by actual `username` and `password`, when specifying the credentials. Below `auth` stanza can be used for both `Driver Config` and `Task Config`.
 
 ```
-config {
-  auth {
+auth {
     username = "user"
     password = "pass"
-  }
 }
 ```
 

@@ -33,7 +33,17 @@ test_privileged_nomad_job() {
 
     # Check if container is running in privileged mode.
     echo "INFO: Checking if container is running in privileged mode."
+
+    # If you are running the tests locally in the vagrant VM (Ubuntu 18.04.03)
+    # the capability set (capsh --print) consists of 37 capabilities.
+    # However, GHA environment is showing 39 capabilities.
+    # The below check will set the expected_capabilities to 37 or 39
+    # depending on the execution environment.
     expected_capabilities="37"
+    if [[ "$GITHUB_ACTIONS" == "true" ]]; then
+       expected_capabilities="39"
+    fi
+
     actual_capabilities=$(nomad alloc exec -job privileged capsh --print|grep -i bounding|cut -d '=' -f 2|awk '{split($0,a,","); print a[length(a)]}')
     if [ "$expected_capabilities" != "$actual_capabilities" ]; then
        echo "ERROR: container is not running in privileged mode."

@@ -84,6 +84,10 @@ var (
 			hclspec.NewAttr("allow_privileged", "bool", false),
 			hclspec.NewLiteral("true"),
 		),
+		"auth": hclspec.NewBlock("auth", false, hclspec.NewObject(map[string]*hclspec.Spec{
+			"username": hclspec.NewAttr("username", "string", true),
+			"password": hclspec.NewAttr("password", "string", true),
+		})),
 	})
 
 	// taskConfigSpec is the specification of the plugin's configuration for
@@ -117,8 +121,8 @@ var (
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
 		"host_network":    hclspec.NewAttr("host_network", "bool", false),
 		"auth": hclspec.NewBlock("auth", false, hclspec.NewObject(map[string]*hclspec.Spec{
-			"username": hclspec.NewAttr("username", "string", false),
-			"password": hclspec.NewAttr("password", "string", false),
+			"username": hclspec.NewAttr("username", "string", true),
+			"password": hclspec.NewAttr("password", "string", true),
 		})),
 		"mounts": hclspec.NewBlockList("mounts", hclspec.NewObject(map[string]*hclspec.Spec{
 			"type": hclspec.NewDefault(
@@ -144,10 +148,11 @@ var (
 
 // Config contains configuration information for the plugin
 type Config struct {
-	Enabled           bool   `codec:"enabled"`
-	ContainerdRuntime string `codec:"containerd_runtime"`
-	StatsInterval     string `codec:"stats_interval"`
-	AllowPrivileged   bool   `codec:"allow_privileged"`
+	Enabled           bool         `codec:"enabled"`
+	ContainerdRuntime string       `codec:"containerd_runtime"`
+	StatsInterval     string       `codec:"stats_interval"`
+	AllowPrivileged   bool         `codec:"allow_privileged"`
+	Auth              RegistryAuth `codec:"auth"`
 }
 
 // Volume, bind, and tmpfs type mounts are supported.
