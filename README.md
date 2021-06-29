@@ -101,6 +101,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **cwd** | string | no | Specify the current working directory for your container process. If the directory does not exist, one will be created for you. |
 | **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
 | **pids_limit** | int64 | no | An integer value that specifies the pid limit for the container. Defaults to unlimited. |
+| **pid_mode** | string | no | `host` or not set (default). Set to `host` to share the PID namespace with the host. |
 | **hostname** | string | no | The hostname to assign to the container. When launching more than one of a task (using `count`) with this option set, every container the task starts will have the same hostname. |
 | **host_dns** | bool | no | Default (`true`). By default, a container launched using `containerd-driver` will use host `/etc/resolv.conf`. This is similar to [`docker behavior`](https://docs.docker.com/config/containers/container-networking/#dns-services). However, if you don't want to use host DNS, you can turn off this flag by setting `host_dns=false`. |
 | **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L395). |

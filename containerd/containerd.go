@@ -20,6 +20,7 @@ package containerd
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	etchosts "github.com/Roblox/nomad-driver-containerd/etchosts"
@@ -153,6 +154,14 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	// WithPidsLimit sets the container's pid limit or maximum
 	if config.PidsLimit > 0 {
 		opts = append(opts, oci.WithPidsLimit(config.PidsLimit))
+	}
+
+	if config.PidMode != "" {
+		if strings.ToLower(config.PidMode) != "host" {
+			return nil, fmt.Errorf("Invalid pid_mode. Set pid_mode=host to enable host pid namespace.")
+		} else {
+			opts = append(opts, oci.WithHostNamespace(specs.PIDNamespace))
+		}
 	}
 
 	// Set sysctls
