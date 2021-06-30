@@ -30,6 +30,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	refdocker "github.com/containerd/containerd/reference/docker"
 	remotesdocker "github.com/containerd/containerd/remotes/docker"
+	"github.com/docker/go-units"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -162,6 +163,15 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		} else {
 			opts = append(opts, oci.WithHostNamespace(specs.PIDNamespace))
 		}
+	}
+
+	// Size of /dev/shm
+	if len(config.ShmSize) > 0 {
+		shmBytes, err := units.RAMInBytes(config.ShmSize)
+		if err != nil {
+			return nil, fmt.Errorf("Error in setting shm_size: %v", err)
+		}
+		opts = append(opts, oci.WithDevShmSize(shmBytes/1024))
 	}
 
 	// Set sysctls

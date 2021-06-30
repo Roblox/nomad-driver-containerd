@@ -118,6 +118,7 @@ var (
 		"entrypoint":      hclspec.NewAttr("entrypoint", "list(string)", false),
 		"seccomp":         hclspec.NewAttr("seccomp", "bool", false),
 		"seccomp_profile": hclspec.NewAttr("seccomp_profile", "string", false),
+		"shm_size":        hclspec.NewAttr("shm_size", "string", false),
 		"sysctl":          hclspec.NewAttr("sysctl", "list(map(string))", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
 		"host_network":    hclspec.NewAttr("host_network", "bool", false),
@@ -183,6 +184,7 @@ type TaskConfig struct {
 	Devices          []string           `codec:"devices"`
 	Seccomp          bool               `codec:"seccomp"`
 	SeccompProfile   string             `codec:"seccomp_profile"`
+	ShmSize          string             `codec:"shm_size"`
 	Sysctl           hclutils.MapStrStr `codec:"sysctl"`
 	Privileged       bool               `codec:"privileged"`
 	PidsLimit        int64              `codec:"pids_limit"`

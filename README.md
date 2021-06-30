@@ -106,6 +106,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **host_dns** | bool | no | Default (`true`). By default, a container launched using `containerd-driver` will use host `/etc/resolv.conf`. This is similar to [`docker behavior`](https://docs.docker.com/config/containers/container-networking/#dns-services). However, if you don't want to use host DNS, you can turn off this flag by setting `host_dns=false`. |
 | **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L395). |
 | **seccomp_profile** | string | no | Path to custom seccomp profile. `seccomp` must be set to `true` in order to use `seccomp_profile`. The default `docker` seccomp profile found [`here`](https://github.com/moby/moby/blob/master/profiles/seccomp/default.json) can be used as a reference, and modified to create a custom seccomp profile. |
+| **shm_size** | string | no | Size of /dev/shm e.g. "128M" if you want 128 MB of /dev/shm. |
 | **sysctl** | map[string]string | no | A key-value map of sysctl configurations to set to the containers on start. |
 | **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
 | **host_network** | bool | no | Enable host network. This is equivalent to `--net=host` in docker. |
