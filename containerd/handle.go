@@ -143,6 +143,20 @@ func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opt
 	if err != nil {
 		return nil, err
 	}
+	go func() {
+		for {
+			select {
+			case s, ok := <-opts.ResizeCh:
+				if !ok {
+					return
+				}
+				if err = h.task.Resize(ctxContainerd, uint32(s.Width), uint32(s.Height)); err != nil {
+					h.logger.Error("Failed to resize terminal", "error", err)
+					return
+				}
+                        }
+		}
+	}()
 
 	defer process.Delete(ctxContainerd)
 
