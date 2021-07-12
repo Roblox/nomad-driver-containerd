@@ -327,7 +327,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	return d.client.NewContainer(
 		ctxWithTimeout,
 		containerConfig.ContainerName,
-		containerd.WithRuntime(d.config.ContainerdRuntime, nil),
+		buildRuntime(d.config.ContainerdRuntime, config.Runtime),
 		containerd.WithNewSnapshot(containerConfig.ContainerSnapshotName, containerConfig.Image),
 		containerd.WithNewSpec(opts...),
 	)

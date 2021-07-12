@@ -9,7 +9,7 @@ test_allow_privileged() {
 
     cp agent.hcl agent.hcl.bkp
 
-    sed -i '8 i \    allow_privileged = false' agent.hcl
+    sed -i '7 i \    allow_privileged = false' agent.hcl
     sudo systemctl restart nomad
     is_systemd_service_active "nomad.service" true
 

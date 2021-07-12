@@ -77,17 +77,25 @@ will launch the job.<br/>
 
 More detailed instructions are in the [`example README.md`](https://github.com/Roblox/nomad-driver-containerd/tree/master/example)
 
-## Supported options
+## Supported Options
 
 **Driver Config**
 
 | Option | Type | Required | Default | Description |
 | :---: | :---: | :---: | :---: | :--- |
 | **enabled** | bool | no | true | Enable/Disable task driver. |
-| **containerd_runtime** | string | yes | N/A | Runtime for containerd e.g. `io.containerd.runc.v1` or `io.containerd.runc.v2`. |
+| **containerd_runtime** | string | no | `io.containerd.runc.v2` | Runtime for containerd. |
 | **stats_interval** | string | no | 1s | Interval for collecting `TaskStats`. |
 | **allow_privileged** | bool | no | true | If set to `false`, driver will deny running privileged jobs. |
 | **auth** | block | no | N/A | Provide authentication for a private registry. See [Authentication](#authentication-private-registry) for more details. |
+
+## Supported Runtimes
+
+Valid options for `containerd_runtime` (**Driver Config**).
+
+- `io.containerd.runc.v1`: `runc` runtime that supports a single container.
+- `io.containerd.runc.v2` (Default): `runc` runtime that supports multiple containers per shim.
+- `io.containerd.runsc.v1`: `gVisor` is an OCI compliant container runtime which provides better security than `runc`. They achieve this by implementing a user space kernel written in go, which implements a substantial portion of the Linux system call interface. For more details, please check their [`official documentation`](https://gvisor.dev/docs/)
 
 **Task Config**
 
@@ -109,6 +117,7 @@ More detailed instructions are in the [`example README.md`](https://github.com/R
 | **shm_size** | string | no | Size of /dev/shm e.g. "128M" if you want 128 MB of /dev/shm. |
 | **sysctl** | map[string]string | no | A key-value map of sysctl configurations to set to the containers on start. |
 | **readonly_rootfs** | bool | no | Container root filesystem will be read-only. |
+| **runtime** | string | no | A string representing a configured runtime to pass to containerd. This is equivalent to the `--runtime` argument in the docker CLI. |
 | **host_network** | bool | no | Enable host network. This is equivalent to `--net=host` in docker. |
 | **extra_hosts** | []string | no | A list of hosts, given as host:IP, to be added to /etc/hosts. |
 | **cap_add** | []string | no | Add individual capabilities. |
