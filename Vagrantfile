@@ -23,6 +23,7 @@ Vagrant.configure("2") do |config|
     apt-get install -y unzip gcc runc jq
     echo "export GOPATH=/home/vagrant/go" >> /home/vagrant/.bashrc
     echo "export PATH=$PATH:/usr/local/go/bin" >> /home/vagrant/.bashrc
+    echo "export CONTAINERD_NAMESPACE=nomad" >> /home/vagrant/.bashrc
     source /home/vagrant/.bashrc
     # without keeping HOME env, 'sudo make test' will try to find files under /root/go/
     echo "Defaults env_keep += HOME" | sudo tee /etc/sudoers.d/keep_home
@@ -48,6 +49,13 @@ Vagrant.configure("2") do |config|
        curl -L --silent -o containerd-1.3.4.linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v1.3.4/containerd-1.3.4.linux-amd64.tar.gz
        tar -C /usr/local -xzf containerd-1.3.4.linux-amd64.tar.gz
        rm -f containerd-1.3.4.linux-amd64.tar.gz
+    fi
+
+    # Install nerdctl 0.10.0
+    if [ ! -f "/usr/local/bin/nerdctl" ]; then
+       curl -L --silent -o nerdctl-0.10.0-linux-amd64.tar.gz https://github.com/containerd/nerdctl/releases/download/v0.10.0/nerdctl-0.10.0-linux-amd64.tar.gz
+       tar -C /usr/local/bin -xzf nerdctl-0.10.0-linux-amd64.tar.gz
+       rm -f nerdctl-0.10.0-linux-amd64.tar.gz
     fi
 
     # Create source directory for privileged.nomad example job.

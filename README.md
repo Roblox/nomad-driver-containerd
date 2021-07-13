@@ -77,6 +77,8 @@ will launch the job.<br/>
 
 More detailed instructions are in the [`example README.md`](https://github.com/Roblox/nomad-driver-containerd/tree/master/example)
 
+To interact with `images` and `containers` directly, you can use [`nerdctl`](https://github.com/containerd/nerdctl) which is a docker compatible CLI for `containerd`. `nerdctl` is already installed in the vagrant VM at `/usr/local/bin`.
+
 ## Supported options
 
 **Driver Config**
