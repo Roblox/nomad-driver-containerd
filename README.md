@@ -4,7 +4,7 @@
 [![Release](https://img.shields.io/badge/version-0.9-blue)](https://github.com/Roblox/nomad-driver-containerd/releases/tag/v0.9)
 [![Docs](https://img.shields.io/badge/docs-website-green.svg)](https://www.nomadproject.io/docs/drivers/external/containerd)
 
-<img src="images/nomad.png" width="300" height="100" />&nbsp;<img src="images/docker.png" width="150" height="100" />&nbsp;<img src="images/containerd.png" width="350" height="100" />
+<img src="images/nomad.png" width="232" height="100" />&nbsp;<img src="images/docker.png" width="116" height="100" />&nbsp;<img src="images/containerd.png" width="285" height="100" />
 
 ## Overview
 Nomad task driver for launching containers using containerd.
