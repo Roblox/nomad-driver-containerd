@@ -45,16 +45,16 @@ main() {
 
 drop_nomad_unit_file() {
   local nomad=$(which nomad)
-  # Drop nomad server (dev) + nomad-driver-containerd systemd unit file into /lib/systemd/system.
+  # Drop nomad server + nomad-driver-containerd systemd unit file into /lib/systemd/system.
   cat << EOF > nomad.service
 # /lib/systemd/system/nomad.service
 [Unit]
-Description=nomad server (dev) + nomad-driver-containerd
+Description=nomad server + nomad-driver-containerd
 Documentation=https://nomadproject.io
 After=network.target containerd.service
 
 [Service]
-ExecStart=$nomad agent -dev -bind=0.0.0.0 -config=$1/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
+ExecStart=$nomad agent -bind=0.0.0.0 -config=$1/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
 KillMode=process
 Delegate=yes
 LimitNOFILE=1048576

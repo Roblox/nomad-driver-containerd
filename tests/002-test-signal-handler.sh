@@ -6,7 +6,7 @@ test_signal_handler_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 
     echo "INFO: Starting nomad signal handler job using nomad-driver-containerd."
-    nomad job run signal.nomad
+    nomad job run -detach signal.nomad
 
     echo "INFO: Checking status of signal handler job."
     signal_status=$(nomad job status -short signal|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
@@ -40,7 +40,7 @@ test_signal_handler_nomad_job() {
     cleanup "$outfile"
 
     echo "INFO: Stopping nomad signal handler job."
-    nomad job stop signal
+    nomad job stop -detach signal
     signal_status=$(nomad job status -short signal|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
     if [ $signal_status != "dead(stopped)" ];then
         echo "ERROR: Error in stopping signal handler job."
@@ -48,7 +48,7 @@ test_signal_handler_nomad_job() {
     fi
 
     echo "INFO: purge nomad signal handler job."
-    nomad job stop -purge signal
+    nomad job stop -detach -purge signal
     popd
 }
 

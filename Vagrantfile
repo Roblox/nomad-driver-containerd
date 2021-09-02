@@ -28,34 +28,34 @@ Vagrant.configure("2") do |config|
     # without keeping HOME env, 'sudo make test' will try to find files under /root/go/
     echo "Defaults env_keep += HOME" | sudo tee /etc/sudoers.d/keep_home
 
-    # Install golang-1.14.3
+    # Install golang-1.17
     if [ ! -f "/usr/local/go/bin/go" ]; then
-      curl -s -L -o go1.14.3.linux-amd64.tar.gz https://dl.google.com/go/go1.14.3.linux-amd64.tar.gz
-      sudo tar -C /usr/local -xzf go1.14.3.linux-amd64.tar.gz
+      curl -s -L -o go1.17.linux-amd64.tar.gz https://dl.google.com/go/go1.17.linux-amd64.tar.gz
+      sudo tar -C /usr/local -xzf go1.17.linux-amd64.tar.gz
       sudo chmod +x /usr/local/go
-      rm -f go1.14.3.linux-amd64.tar.gz
+      rm -f go1.17.linux-amd64.tar.gz
     fi
 
-    # Install nomad-1.1.0
+    # Install nomad-1.1.4
     if [ ! -f "/usr/bin/nomad" ]; then
-      wget --quiet https://releases.hashicorp.com/nomad/1.1.0/nomad_1.1.0_linux_amd64.zip
-      unzip nomad_1.1.0_linux_amd64.zip -d /usr/bin
+      wget --quiet https://releases.hashicorp.com/nomad/1.1.4/nomad_1.1.4_linux_amd64.zip
+      unzip nomad_1.1.4_linux_amd64.zip -d /usr/bin
       chmod +x /usr/bin/nomad
-      rm -f nomad_1.1.0_linux_amd64.zip
+      rm -f nomad_1.1.4_linux_amd64.zip
     fi
 
-    # Install containerd-1.3.4
+    # Install containerd-1.5.5
     if [ ! -f "/usr/local/bin/containerd" ]; then
-       curl -L --silent -o containerd-1.3.4.linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v1.3.4/containerd-1.3.4.linux-amd64.tar.gz
-       tar -C /usr/local -xzf containerd-1.3.4.linux-amd64.tar.gz
-       rm -f containerd-1.3.4.linux-amd64.tar.gz
+       curl -L --silent -o containerd-1.5.5-linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v1.5.5/containerd-1.5.5-linux-amd64.tar.gz
+       tar -C /usr/local -xzf containerd-1.5.5-linux-amd64.tar.gz
+       rm -f containerd-1.5.5-linux-amd64.tar.gz
     fi
 
-    # Install nerdctl 0.10.0
+    # Install nerdctl 0.11.1
     if [ ! -f "/usr/local/bin/nerdctl" ]; then
-       curl -L --silent -o nerdctl-0.10.0-linux-amd64.tar.gz https://github.com/containerd/nerdctl/releases/download/v0.10.0/nerdctl-0.10.0-linux-amd64.tar.gz
-       tar -C /usr/local/bin -xzf nerdctl-0.10.0-linux-amd64.tar.gz
-       rm -f nerdctl-0.10.0-linux-amd64.tar.gz
+       curl -L --silent -o nerdctl-0.11.1-linux-amd64.tar.gz https://github.com/containerd/nerdctl/releases/download/v0.11.1/nerdctl-0.11.1-linux-amd64.tar.gz
+       tar -C /usr/local/bin -xzf nerdctl-0.11.1-linux-amd64.tar.gz
+       rm -f nerdctl-0.11.1-linux-amd64.tar.gz
     fi
 
     # Create source directory for privileged.nomad example job.

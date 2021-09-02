@@ -7,7 +7,7 @@ test_capabilities_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 
     echo "INFO: Starting nomad capabilities job using nomad-driver-containerd."
-    nomad job run capabilities.nomad
+    nomad job run -detach capabilities.nomad
 
     echo "INFO: Checking status of capabilities job."
     cap_status=$(nomad job status -short capabilities|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
@@ -59,7 +59,7 @@ test_capabilities_nomad_job() {
     cleanup "$outfile"
 
     echo "INFO: Stopping nomad capabilities job."
-    nomad job stop capabilities
+    nomad job stop -detach capabilities
     cap_status=$(nomad job status -short capabilities|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
     if [ $cap_status != "dead(stopped)" ];then
         echo "ERROR: Error in stopping capabilities job."
@@ -67,7 +67,7 @@ test_capabilities_nomad_job() {
     fi
 
     echo "INFO: purge nomad capabilities job."
-    nomad job stop -purge capabilities
+    nomad job stop -detach -purge capabilities
     popd
 }
 

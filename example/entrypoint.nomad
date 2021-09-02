@@ -6,9 +6,9 @@ job "entrypoint" {
       driver = "containerd-driver"
 
       config {
-        image      = "ubuntu:16.04"
-        entrypoint = ["/bin/echo"]
-        args       = ["container1", "container2"]
+        image       = "ubuntu:16.04"
+        entrypoint  = ["/bin/bash"]
+        args        = ["-c", "for i in {1..100}; do echo container1 container2; sleep 1s; done"]
       }
 
       resources {

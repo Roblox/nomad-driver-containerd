@@ -9,7 +9,7 @@ test_auth_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 
     echo "INFO: Starting nomad $job_name job using nomad-driver-containerd."
-    nomad job run $job_name.nomad
+    nomad job run -detach $job_name.nomad
 
     wait_nomad_job_status $job_name failed
 
@@ -23,7 +23,7 @@ test_auth_nomad_job() {
     fi
 
     echo "INFO: purge nomad ${job_name} job."
-    nomad job stop -purge ${job_name}
+    nomad job stop -detach -purge ${job_name}
     popd
 }
 

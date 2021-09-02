@@ -2,8 +2,8 @@
 
 set -eo pipefail
 
-export NOMAD_VERSION=1.1.0
-export CONTAINERD_VERSION=1.3.4
+export NOMAD_VERSION=1.1.4
+export CONTAINERD_VERSION=1.5.5
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:/usr/local/bin
 if [ -e /home/runner ]; then
@@ -11,7 +11,7 @@ if [ -e /home/runner ]; then
 else
        export GOPATH=$HOME/go
 fi
-export GO_VERSION=1.14.3
+export GO_VERSION=1.17
 export SRCDIR=`dirname $0`
 source $SRCDIR/utils.sh
 
@@ -83,10 +83,10 @@ setup() {
 	# Change $(pwd) to /tmp
 	pushd /tmp
 
-	# Install containerd 1.3.4
-	curl -L -o containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
-	sudo tar -C /usr/local -xzf containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
-	rm -f containerd-${CONTAINERD_VERSION}.linux-amd64.tar.gz
+	# Install containerd 1.5.5
+	curl -L -o containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
+	sudo tar -C /usr/local -xzf containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
+	rm -f containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
 
 	# Drop containerd systemd unit file into /lib/systemd/system.
 	cat << EOF > containerd.service
@@ -120,17 +120,17 @@ EOF
         sudo systemctl start containerd
 	is_systemd_service_active "containerd.service" false
 
-	# Remove default golang (1.7.3) and install a custom version (1.14.3) of golang.
+	# Remove default golang (1.7.3) and install a custom version (1.17) of golang.
 	# This is required for supporting go mod, and to be able to compile nomad-driver-containerd.
 	sudo rm -rf /usr/local/go
 
-	# Install golang 1.14.3
+	# Install golang 1.17
 	curl -L -o go${GO_VERSION}.linux-amd64.tar.gz https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz
 	sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 	sudo chmod +x /usr/local/go
 	rm -f go${GO_VERSION}.linux-amd64.tar.gz
 
-	# Install nomad 1.1.0
+	# Install nomad 1.1.4
 	curl -L -o nomad_${NOMAD_VERSION}_linux_amd64.zip https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip
 	sudo unzip -d /usr/local/bin nomad_${NOMAD_VERSION}_linux_amd64.zip
 	sudo chmod +x /usr/local/bin/nomad
@@ -143,16 +143,16 @@ EOF
 	mkdir -p /tmp/nomad-driver-containerd
 	mv containerd-driver /tmp/nomad-driver-containerd
 
-	# Drop nomad server (dev) + nomad-driver-containerd systemd unit file into /lib/systemd/system.
+	# Drop nomad server + nomad-driver-containerd systemd unit file into /lib/systemd/system.
 	cat << EOF > nomad.service
 # /lib/systemd/system/nomad.service
 [Unit]
-Description=nomad server (dev) + nomad-driver-containerd
+Description=nomad server + nomad-driver-containerd
 Documentation=https://nomadproject.io
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/nomad agent -dev -config=$GOPATH/src/github.com/Roblox/nomad-driver-containerd/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
+ExecStart=/usr/local/bin/nomad agent -config=$GOPATH/src/github.com/Roblox/nomad-driver-containerd/example/agent.hcl -plugin-dir=/tmp/nomad-driver-containerd
 KillMode=process
 Delegate=yes
 LimitNOFILE=1048576

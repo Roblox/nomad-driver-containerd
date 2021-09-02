@@ -9,7 +9,7 @@ test_privileged_nomad_job() {
     setup_bind_source
 
     echo "INFO: Starting nomad privileged job using nomad-driver-containerd."
-    nomad job run privileged.nomad
+    nomad job run -detach privileged.nomad
 
     echo "INFO: Checking status of privileged job."
     job_status=$(nomad job status -short privileged|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
@@ -68,7 +68,7 @@ test_privileged_nomad_job() {
     fi
 
     echo "INFO: Stopping nomad privileged job."
-    nomad job stop privileged
+    nomad job stop -detach privileged
     job_status=$(nomad job status -short privileged|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
     if [ $job_status != "dead(stopped)" ];then
         echo "ERROR: Error in stopping privileged job."
@@ -76,7 +76,7 @@ test_privileged_nomad_job() {
     fi
 
     echo "INFO: purge nomad privileged job."
-    nomad job stop -purge privileged
+    nomad job stop -detach -purge privileged
     popd
 }
 
