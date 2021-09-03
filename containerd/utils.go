@@ -37,6 +37,20 @@ func buildMountpoint(mountType, mountTarget, mountSource string, mountOptions []
 	return m
 }
 
+// getStdoutStderrFifos return the container's stdout and stderr FIFO's.
+func getStdoutStderrFifos(stdoutPath, stderrPath string) (*os.File, *os.File, error) {
+	stdout, err := openFIFO(stdoutPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	stderr, err := openFIFO(stderrPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return stdout, stderr, nil
+}
+
 // FIFO's are named pipes in linux.
 // openFIFO() opens the nomad task stdout/stderr pipes and returns the fd.
 func openFIFO(path string) (*os.File, error) {
