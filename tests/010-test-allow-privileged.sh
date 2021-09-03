@@ -9,12 +9,12 @@ test_allow_privileged() {
 
     cp agent.hcl agent.hcl.bkp
 
-    sed -i '8 i \    allow_privileged = false' agent.hcl
+    sed -i '9 i \    allow_privileged = false' agent.hcl
     sudo systemctl restart nomad
     is_systemd_service_active "nomad.service" true
 
     echo "INFO: Starting nomad ${job_name} job using nomad-driver-containerd."
-    nomad job run privileged_not_allowed.nomad
+    nomad job run -detach privileged_not_allowed.nomad
     # Sleep for 5 seconds, to allow ${alloc_id} to get populated.
     sleep 5s
 
@@ -28,7 +28,7 @@ test_allow_privileged() {
     fi
 
     echo "INFO: purge nomad ${job_name} job."
-    nomad job stop -purge ${job_name}
+    nomad job stop -detach -purge ${job_name}
 
     mv agent.hcl.bkp agent.hcl
     popd

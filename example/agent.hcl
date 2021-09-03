@@ -1,4 +1,5 @@
 log_level = "INFO"
+data_dir = "/tmp/nomad"
 
 plugin "containerd-driver" {
   config {
@@ -9,6 +10,8 @@ plugin "containerd-driver" {
 }
 
 server {
+  enabled = true
+  bootstrap_expect = 1
   default_scheduler_config {
     scheduler_algorithm = "spread"
     memory_oversubscription_enabled = true
@@ -22,6 +25,7 @@ server {
 }
 
 client {
+  enabled = true
   host_volume "s1" {
     path = "/tmp/host_volume/s1"
     read_only = false

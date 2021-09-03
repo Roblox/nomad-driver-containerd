@@ -8,7 +8,7 @@ test_dns_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 
     echo "INFO: Starting nomad $job_name job using nomad-driver-containerd."
-    nomad job run $job_name.nomad
+    nomad job run -detach $job_name.nomad
 
     # Even though $(nomad job status) reports job status as "running"
     # The actual container process might not be running yet.
@@ -62,7 +62,7 @@ test_dns_nomad_job() {
     fi
 
     echo "INFO: Stopping nomad ${job_name} job."
-    nomad job stop ${job_name}
+    nomad job stop -detach ${job_name}
     job_status=$(nomad job status -short ${job_name}|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
     if [ $job_status != "dead(stopped)" ];then
         echo "ERROR: Error in stopping ${job_name} job."
@@ -70,7 +70,7 @@ test_dns_nomad_job() {
     fi
 
     echo "INFO: purge nomad ${job_name} job."
-    nomad job stop -purge ${job_name}
+    nomad job stop -detach -purge ${job_name}
     popd
 }
 

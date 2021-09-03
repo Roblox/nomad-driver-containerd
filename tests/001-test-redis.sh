@@ -6,7 +6,7 @@ test_redis_nomad_job() {
     pushd ~/go/src/github.com/Roblox/nomad-driver-containerd/example
 
     echo "INFO: Starting nomad redis job using nomad-driver-containerd."
-    nomad job run redis.nomad
+    nomad job run -detach redis.nomad
 
     redis_status=$(nomad job status -short redis|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
     if [ $redis_status != "running" ];then
@@ -63,7 +63,7 @@ test_redis_nomad_job() {
     fi
 
     echo "INFO: Stopping nomad redis job."
-    nomad job stop redis
+    nomad job stop -detach redis
     redis_status=$(nomad job status -short redis|grep Status|awk '{split($0,a,"="); print a[2]}'|tr -d ' ')
     if [ $redis_status != "dead(stopped)" ];then
         echo "ERROR: Error in stopping redis job."
@@ -71,7 +71,7 @@ test_redis_nomad_job() {
     fi
 
     echo "INFO: purge nomad redis job."
-    nomad job stop -purge redis
+    nomad job stop -detach -purge redis
     popd
 }
 
