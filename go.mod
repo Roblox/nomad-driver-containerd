@@ -5,25 +5,20 @@ go 1.12
 
 require (
 	github.com/NVIDIA/gpu-monitoring-tools v0.0.0-20191126014920-0d8df858cca4 // indirect
-	github.com/containerd/cgroups v0.0.0-20200609174450-80c669f4bad0
-	github.com/containerd/containerd v1.4.8
-	github.com/containerd/go-cni v0.0.0-20191121212822-60d125212faf // indirect
-	github.com/containerd/typeurl v0.0.0-20180627222232-a93fcdb778cd
-	github.com/containernetworking/plugins v0.8.3 // indirect
-	github.com/coreos/go-iptables v0.4.3 // indirect
+	github.com/containerd/cgroups v1.0.1
+	github.com/containerd/containerd v1.5.4
+	github.com/containerd/typeurl v1.0.2
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200330121334-7f8b4b621b5d+incompatible
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
-	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0
-	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
-	github.com/gogo/googleapis v1.4.0 // indirect
-	github.com/hashicorp/consul-template v0.25.1
+	github.com/hashicorp/consul-template v0.25.2
 	github.com/hashicorp/go-envparse v0.0.0-20190703193109-150b3a2a4611 // indirect
 	github.com/hashicorp/go-hclog v0.14.1
-	github.com/hashicorp/go-uuid v1.0.1
-	github.com/hashicorp/nomad v1.1.0
-	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
+	github.com/hashicorp/go-uuid v1.0.2
+	github.com/hashicorp/nomad v1.1.4
+	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/spf13/cobra v1.1.1
+	google.golang.org/grpc v1.40.0 // indirect
 )
 
 // use lower-case sirupsen
