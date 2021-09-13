@@ -341,12 +341,7 @@ func (d *Driver) loadContainer(id string) (containerd.Container, error) {
 }
 
 func (d *Driver) createTask(container containerd.Container, stdoutPath, stderrPath string) (containerd.Task, error) {
-	stdout, err := openFIFO(stdoutPath)
-	if err != nil {
-		return nil, err
-	}
-
-	stderr, err := openFIFO(stderrPath)
+	stdout, stderr, err := getStdoutStderrFifos(stdoutPath, stderrPath)
 	if err != nil {
 		return nil, err
 	}
@@ -357,9 +352,14 @@ func (d *Driver) createTask(container containerd.Container, stdoutPath, stderrPa
 	return container.NewTask(ctxWithTimeout, cio.NewCreator(cio.WithStreams(nil, stdout, stderr)))
 }
 
-func (d *Driver) getTask(container containerd.Container) (containerd.Task, error) {
+func (d *Driver) getTask(container containerd.Container, stdoutPath, stderrPath string) (containerd.Task, error) {
+	stdout, stderr, err := getStdoutStderrFifos(stdoutPath, stderrPath)
+	if err != nil {
+		return nil, err
+	}
+
 	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
 	defer cancel()
 
-	return container.Task(ctxWithTimeout, cio.Load)
+	return container.Task(ctxWithTimeout, cio.NewAttach(cio.WithStreams(nil, stdout, stderr)))
 }

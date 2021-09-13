@@ -29,6 +29,7 @@ main() {
 	setup
 	echo "INFO: Checking if nomad-driver-containerd is up and running, and nomad is ready to accept jobs."
 	is_containerd_driver_active
+	is_nomad_ready
 
 	run_tests $@
 	exit $PASS_STATUS
@@ -200,6 +201,29 @@ is_containerd_driver_active() {
 		echo "ERROR: containerd driver didn't come up. exit 1."
 		exit 1
 	fi
+}
+
+is_nomad_ready() {
+        i="0"
+        while test $i -lt 5
+        do
+                set +e
+                status=$(curl -s http://127.0.0.1:4646/v1/nodes|jq '.[0] ."Status"')
+                rc=$?
+                set -e
+                if [[ $rc -eq 0 && $status = \"ready\" ]]; then
+                        echo "INFO: nomad is ready to accept jobs."
+                        break
+                fi
+                echo "INFO: nomad is initializing, sleep for 4 seconds."
+                sleep 4s
+                i=$[$i+1]
+        done
+
+        if [ $i -ge 5 ]; then
+                echo "ERROR: nomad didn't come up. exit 1."
+                exit 1
+        fi
 }
 
 main "$@"

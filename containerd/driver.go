@@ -207,6 +207,8 @@ type TaskConfig struct {
 type TaskState struct {
 	StartedAt     time.Time
 	ContainerName string
+	StdoutPath    string
+	StderrPath    string
 }
 
 type Driver struct {
@@ -496,6 +498,8 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	driverState := TaskState{
 		StartedAt:     h.startedAt,
 		ContainerName: containerName,
+		StdoutPath:    cfg.StdoutPath,
+		StderrPath:    cfg.StderrPath,
 	}
 
 	if err := handle.SetDriverState(&driverState); err != nil {
@@ -539,7 +543,7 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		return fmt.Errorf("Error in recovering container: %v", err)
 	}
 
-	task, err := d.getTask(container)
+	task, err := d.getTask(container, taskState.StdoutPath, taskState.StderrPath)
 	if err != nil {
 		return fmt.Errorf("Error in recovering task: %v", err)
 	}
