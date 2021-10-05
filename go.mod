@@ -6,7 +6,7 @@ go 1.12
 require (
 	github.com/NVIDIA/gpu-monitoring-tools v0.0.0-20191126014920-0d8df858cca4 // indirect
 	github.com/containerd/cgroups v1.0.1
-	github.com/containerd/containerd v1.5.4
+	github.com/containerd/containerd v1.5.7
 	github.com/containerd/typeurl v1.0.2
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200330121334-7f8b4b621b5d+incompatible
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
