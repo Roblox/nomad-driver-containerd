@@ -149,7 +149,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 
 	// Enable privileged mode.
 	if config.Privileged {
-		opts = append(opts, oci.WithPrivileged, oci.WithAllDevicesAllowed, oci.WithHostDevices)
+		opts = append(opts, oci.WithPrivileged, oci.WithAllDevicesAllowed, oci.WithHostDevices, oci.WithNewPrivileges)
 	}
 
 	// WithPidsLimit sets the container's pid limit or maximum
