@@ -41,7 +41,7 @@ test_privileged_nomad_job() {
     # depending on the execution environment.
     expected_capabilities="37"
     if [[ "$GITHUB_ACTIONS" == "true" ]]; then
-       expected_capabilities="39"
+       expected_capabilities="40"
     fi
 
     actual_capabilities=$(nomad alloc exec -job privileged capsh --print|grep -i bounding|cut -d '=' -f 2|awk '{split($0,a,","); print a[length(a)]}')
