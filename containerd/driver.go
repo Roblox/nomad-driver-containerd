@@ -114,8 +114,16 @@ var (
 			hclspec.NewAttr("image_pull_timeout", "string", false),
 			hclspec.NewLiteral(`"5m"`),
 		),
-		"extra_hosts":     hclspec.NewAttr("extra_hosts", "list(string)", false),
-		"entrypoint":      hclspec.NewAttr("entrypoint", "list(string)", false),
+		"extra_hosts": hclspec.NewAttr("extra_hosts", "list(string)", false),
+		"entrypoint":  hclspec.NewAttr("entrypoint", "list(string)", false),
+		"memory_swap": hclspec.NewDefault(
+			hclspec.NewAttr("memory_swap", "string", false),
+			hclspec.NewLiteral("0"),
+		),
+		"memory_swappiness": hclspec.NewDefault(
+			hclspec.NewAttr("memory_swappiness", "number", false),
+			hclspec.NewLiteral("0.0"),
+		),
 		"seccomp":         hclspec.NewAttr("seccomp", "bool", false),
 		"seccomp_profile": hclspec.NewAttr("seccomp_profile", "string", false),
 		"shm_size":        hclspec.NewAttr("shm_size", "string", false),
@@ -198,6 +206,8 @@ type TaskConfig struct {
 	HostNetwork      bool               `codec:"host_network"`
 	Auth             RegistryAuth       `codec:"auth"`
 	Mounts           []Mount            `codec:"mounts"`
+	MemorySwap       string             `codec:"memory_swap"`
+	MemorySwappiness float64            `codec:"memory_swappiness"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
@@ -468,6 +478,16 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	containerConfig.MemoryLimit = cfg.Resources.NomadResources.Memory.MemoryMB * 1024 * 1024
 	containerConfig.MemoryHardLimit = cfg.Resources.NomadResources.Memory.MemoryMaxMB * 1024 * 1024
 	containerConfig.CPUShares = cfg.Resources.LinuxResources.CPUShares
+
+	if driverConfig.MemorySwap != "0" {
+		swap, err := memoryInBytes(driverConfig.MemorySwap)
+		if err != nil {
+			return nil, nil, err
+		}
+		containerConfig.MemorySwap = swap
+	}
+
+	containerConfig.MemorySwappiness = driverConfig.MemorySwappiness
 
 	container, err := d.createContainer(&containerConfig, &driverConfig)
 	if err != nil {
