@@ -49,7 +49,7 @@ type ContainerConfig struct {
 	MemoryLimit           int64
 	MemoryHardLimit       int64
 	MemorySwap            int64
-	MemorySwappiness      float64
+	MemorySwappiness      int64
 	CPUShares             int64
 }
 
@@ -229,7 +229,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	opts = append(opts, WithMemoryLimits(containerConfig.MemoryLimit, containerConfig.MemoryHardLimit))
 
 	// Set swap
-	if containerConfig.MemorySwap > 0 || containerConfig.MemorySwappiness > 0.0 {
+	if containerConfig.MemorySwap > 0 || containerConfig.MemorySwappiness > 0 {
 		opts = append(opts, WithSwap(containerConfig.MemorySwap, uint64(containerConfig.MemorySwappiness)))
 	}
 

@@ -122,7 +122,7 @@ var (
 		),
 		"memory_swappiness": hclspec.NewDefault(
 			hclspec.NewAttr("memory_swappiness", "number", false),
-			hclspec.NewLiteral("0.0"),
+			hclspec.NewLiteral("0"),
 		),
 		"seccomp":         hclspec.NewAttr("seccomp", "bool", false),
 		"seccomp_profile": hclspec.NewAttr("seccomp_profile", "string", false),
@@ -207,7 +207,7 @@ type TaskConfig struct {
 	Auth             RegistryAuth       `codec:"auth"`
 	Mounts           []Mount            `codec:"mounts"`
 	MemorySwap       string             `codec:"memory_swap"`
-	MemorySwappiness float64            `codec:"memory_swappiness"`
+	MemorySwappiness int64              `codec:"memory_swappiness"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
