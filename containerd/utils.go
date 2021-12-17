@@ -126,7 +126,7 @@ func WithSwap(swap int64, swapiness uint64) oci.SpecOpts {
 func memoryInBytes(strmem string) (int64, error) {
 	l := len(strmem)
 	if l < 2 {
-		return 0, fmt.Errorf("Invalid memory string: %s", strmem)
+		return 0, fmt.Errorf("Invalid memory swap string: %s", strmem)
 	}
 	ival, err := strconv.Atoi(strmem[0 : l-1])
 	if err != nil {
@@ -143,6 +143,6 @@ func memoryInBytes(strmem string) (int64, error) {
 	case 'g':
 		return int64(ival) * 1024 * 1024 * 1024, nil
 	default:
-		return 0, fmt.Errorf("Invalid memory string: %s", strmem)
+		return 0, fmt.Errorf("Invalid memory swap string: %s", strmem)
 	}
 }
