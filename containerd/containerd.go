@@ -19,9 +19,15 @@ package containerd
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/docker/distribution/reference"
+	"github.com/docker/docker/registry"
 
 	etchosts "github.com/Roblox/nomad-driver-containerd/etchosts"
 	"github.com/containerd/containerd"
@@ -69,8 +75,88 @@ func (d *Driver) getContainerdVersion() (containerd.Version, error) {
 
 type CredentialsOpt func(string) (string, string, error)
 
-func (d *Driver) parshAuth(auth *RegistryAuth) CredentialsOpt {
-	return func(string) (string, string, error) {
+// resolveRegistryAuthentication attempts to retrieve auth credentials for the
+// repo, trying all authentication-backends possible.
+func (d *Driver) resolveRegistryAuthentication(driverConfig *TaskConfig, repo string) CredentialsOpt {
+	return firstValidAuth(repo, []CredentialsOpt{
+		d.parseAuth(&driverConfig.Auth),
+		d.parseAuthHelper(&d.config.AuthHelper),
+	})
+}
+
+// firstValidAuth tries a list of auth backends, returning first error or AuthConfiguration
+func firstValidAuth(repo string, backends []CredentialsOpt) CredentialsOpt {
+	for _, backend := range backends {
+		username, password, err := backend(repo)
+		if username != "" && password != "" && err == nil {
+			return func(string) (string, string, error) {
+				return username, password, nil
+			}
+		}
+	}
+	return nil
+}
+
+// ParseRepositoryTag gets the name of the repository and returns it splitted
+// in two parts: the repository and the tag. It ignores the digest when it is
+// present. Copied instead of brining down dependency.
+//
+// Some examples:
+//
+//     localhost.localdomain:5000/samalba/hipache:latest -> localhost.localdomain:5000/samalba/hipache, latest
+//     localhost.localdomain:5000/samalba/hipache -> localhost.localdomain:5000/samalba/hipache, ""
+//     busybox:latest@sha256:4a731fb46adc5cefe3ae374a8b6020fc1b6ad667a279647766e9a3cd89f6fa92 -> busybox, latest
+func parseRepositoryTag(repoTag string) (repository string, tag string) {
+	parts := strings.SplitN(repoTag, "@", 2)
+	repoTag = parts[0]
+	n := strings.LastIndex(repoTag, ":")
+	if n < 0 {
+		return repoTag, ""
+	}
+	if tag := repoTag[n+1:]; !strings.Contains(tag, "/") {
+		return repoTag[:n], tag
+	}
+	return repoTag, ""
+}
+
+func parseContainerImage(image string) (repo, tag string) {
+	repo, tag = parseRepositoryTag(image)
+	if tag != "" {
+		return repo, tag
+	}
+	if i := strings.IndexRune(image, '@'); i > -1 { // Has digest (@sha256:...)
+		// when pulling images with a digest, the repository contains the sha hash, and the tag is empty
+		// see: https://github.com/fsouza/go-dockerclient/blob/master/image_test.go#L471
+		repo = image
+	} else {
+		tag = "latest"
+	}
+	return repo, tag
+}
+
+// parseRepositoryInfo takes a repo and returns the Docker RepositoryInfo. This
+// is useful for interacting with a Docker config object.
+func parseRepositoryInfo(repo string) (*registry.RepositoryInfo, error) {
+	name, err := reference.ParseNormalizedNamed(repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse named repo %q: %v", repo, err)
+	}
+
+	repoInfo, err := registry.ParseRepositoryInfo(name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse repository: %v", err)
+	}
+
+	return repoInfo, nil
+}
+
+// authIsEmpty returns if auth is nil or an empty structure
+func authIsEmpty(username, password string) bool {
+	return username == "" && password == ""
+}
+
+func (d *Driver) parseAuth(auth *RegistryAuth) CredentialsOpt {
+	return func(_ string) (string, string, error) {
 		var username, password string
 		if d.config.Auth.Username != "" && d.config.Auth.Password != "" {
 			username = d.config.Auth.Username
@@ -82,19 +168,61 @@ func (d *Driver) parshAuth(auth *RegistryAuth) CredentialsOpt {
 			username = auth.Username
 			password = auth.Password
 		}
+
+		if authIsEmpty(username, password) {
+			return "", "", errors.New("no auth credentials found")
+		}
+
 		return username, password, nil
+	}
+}
+
+func (d *Driver) parseAuthHelper(auth *RegistryAuthHelper) CredentialsOpt {
+	return func(repo string) (string, string, error) {
+		if auth.Helper == "" {
+			return "", "", errors.New("no auth helper set")
+		}
+
+		cmd := exec.Command(auth.Helper, "get")
+
+		repoInfo, err := parseRepositoryInfo(repo)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to parse repository:%s", repo)
+		}
+
+		cmd.Stdin = strings.NewReader(repoInfo.Index.Name)
+		output, err := cmd.Output()
+		if err != nil {
+			switch err.(type) {
+			default:
+				return "", "", fmt.Errorf("failed running helper for repo:%s, err:%s", repoInfo.Index.Name, err.Error())
+			case *exec.ExitError:
+				return "", "", fmt.Errorf("%s with input %q failed with stderr: %s", auth.Helper, repo, err.Error())
+			}
+		}
+
+		var response map[string]string
+		if err := json.Unmarshal(output, &response); err != nil {
+			return "", "", err
+		}
+
+		if authIsEmpty(response["Username"], response["Secret"]) {
+			return "", "", errors.New("no auth credentials found")
+		}
+
+		return response["Username"], response["Secret"], nil
 	}
 }
 
 func withResolver(creds CredentialsOpt) containerd.RemoteOpt {
 	resolver := remotesdocker.NewResolver(remotesdocker.ResolverOptions{
 		Hosts: remotesdocker.ConfigureDefaultRegistries(remotesdocker.WithAuthorizer(
-			remotesdocker.NewAuthorizer(nil, creds))),
+			remotesdocker.NewDockerAuthorizer(remotesdocker.WithAuthCreds(creds)))),
 	})
 	return containerd.WithResolver(resolver)
 }
 
-func (d *Driver) pullImage(imageName, imagePullTimeout string, auth *RegistryAuth) (containerd.Image, error) {
+func (d *Driver) pullImage(imageName, imagePullTimeout string, auth CredentialsOpt) (containerd.Image, error) {
 	pullTimeout, err := time.ParseDuration(imagePullTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse image_pull_timeout: %v", err)
@@ -110,7 +238,7 @@ func (d *Driver) pullImage(imageName, imagePullTimeout string, auth *RegistryAut
 
 	pullOpts := []containerd.RemoteOpt{
 		containerd.WithPullUnpack,
-		withResolver(d.parshAuth(auth)),
+		withResolver(auth),
 	}
 
 	return d.client.Pull(ctxWithTimeout, named.String(), pullOpts...)

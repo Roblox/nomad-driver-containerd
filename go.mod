@@ -8,6 +8,7 @@ require (
 	github.com/containerd/cgroups v1.0.1
 	github.com/containerd/containerd v1.5.8
 	github.com/containerd/typeurl v1.0.2
+	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200330121334-7f8b4b621b5d+incompatible
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go-units v0.4.0
@@ -15,6 +16,7 @@ require (
 	github.com/hashicorp/consul-template v0.25.2
 	github.com/hashicorp/go-envparse v0.0.0-20190703193109-150b3a2a4611 // indirect
 	github.com/hashicorp/go-hclog v0.14.1
+	github.com/hashicorp/go-msgpack v1.1.5
 	github.com/hashicorp/go-uuid v1.0.2
 	github.com/hashicorp/nomad v1.1.4
 	github.com/opencontainers/image-spec v1.0.2 // indirect

@@ -88,6 +88,9 @@ var (
 			"username": hclspec.NewAttr("username", "string", true),
 			"password": hclspec.NewAttr("password", "string", true),
 		})),
+		"auth_helper": hclspec.NewBlock("auth_helper", false, hclspec.NewObject(map[string]*hclspec.Spec{
+			"helper": hclspec.NewAttr("helper", "string", true),
+		})),
 	})
 
 	// taskConfigSpec is the specification of the plugin's configuration for
@@ -158,11 +161,12 @@ var (
 
 // Config contains configuration information for the plugin
 type Config struct {
-	Enabled           bool         `codec:"enabled"`
-	ContainerdRuntime string       `codec:"containerd_runtime"`
-	StatsInterval     string       `codec:"stats_interval"`
-	AllowPrivileged   bool         `codec:"allow_privileged"`
-	Auth              RegistryAuth `codec:"auth"`
+	Enabled           bool               `codec:"enabled"`
+	ContainerdRuntime string             `codec:"containerd_runtime"`
+	StatsInterval     string             `codec:"stats_interval"`
+	AllowPrivileged   bool               `codec:"allow_privileged"`
+	Auth              RegistryAuth       `codec:"auth"`
+	AuthHelper        RegistryAuthHelper `codec:"auth_helper"`
 }
 
 // Volume, bind, and tmpfs type mounts are supported.
@@ -178,6 +182,11 @@ type Mount struct {
 type RegistryAuth struct {
 	Username string `codec:"username"`
 	Password string `codec:"password"`
+}
+
+// RegistryAuthHelper info to pull image from registry when using helper binary.
+type RegistryAuthHelper struct {
+	Helper string `codec:"helper"`
 }
 
 // TaskConfig contains configuration information for a task that runs with
@@ -419,7 +428,11 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		return nil, nil, fmt.Errorf("task with ID %q already started", cfg.ID)
 	}
 
-	var driverConfig TaskConfig
+	var (
+		driverConfig TaskConfig
+		err          error
+	)
+
 	if err := cfg.DecodeDriverConfig(&driverConfig); err != nil {
 		return nil, nil, fmt.Errorf("failed to decode driver config: %v", err)
 	}
@@ -442,8 +455,10 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	containerName := cfg.Name + "-" + cfg.AllocID
 	containerConfig.ContainerName = containerName
 
-	var err error
-	containerConfig.Image, err = d.pullImage(driverConfig.Image, driverConfig.ImagePullTimeout, &driverConfig.Auth)
+	repo, _ := parseContainerImage(driverConfig.Image)
+	authFunc := d.resolveRegistryAuthentication(&driverConfig, repo)
+
+	containerConfig.Image, err = d.pullImage(driverConfig.Image, driverConfig.ImagePullTimeout, authFunc)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in pulling image %s: %v", driverConfig.Image, err)
 	}

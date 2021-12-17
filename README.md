@@ -90,6 +90,7 @@ To interact with `images` and `containers` directly, you can use [`nerdctl`](htt
 | **stats_interval** | string | no | 1s | Interval for collecting `TaskStats`. |
 | **allow_privileged** | bool | no | true | If set to `false`, driver will deny running privileged jobs. |
 | **auth** | block | no | N/A | Provide authentication for a private registry. See [Authentication](#authentication-private-registry) for more details. |
+| **auth_helper** | block | no | N/A | Lookup authentication information from external sources. See [Authentication Helper](example/agent-auth-helper.hcl) for more details. Order of precedence Job Auth, Config Auth, Config Auth Helper.  |
 
 **Task Config**
 
