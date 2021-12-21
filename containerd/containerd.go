@@ -41,6 +41,7 @@ import (
 )
 
 type ContainerConfig struct {
+	Annotations           map[string]string
 	Image                 containerd.Image
 	ContainerName         string
 	ContainerSnapshotName string
@@ -360,6 +361,9 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	if containerConfig.MemorySwap > 0 || containerConfig.MemorySwappiness > 0 {
 		opts = append(opts, WithSwap(containerConfig.MemorySwap, uint64(containerConfig.MemorySwappiness)))
 	}
+
+	// Set annotations
+	opts = append(opts, oci.WithAnnotations(containerConfig.Annotations))
 
 	// Set CPU Shares.
 	opts = append(opts, oci.WithCPUShares(uint64(containerConfig.CPUShares)))

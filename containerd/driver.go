@@ -98,17 +98,18 @@ var (
 	// this is used to validate the configuration specified for the plugin
 	// when a job is submitted.
 	taskConfigSpec = hclspec.NewObject(map[string]*hclspec.Spec{
-		"image":      hclspec.NewAttr("image", "string", true),
-		"command":    hclspec.NewAttr("command", "string", false),
-		"args":       hclspec.NewAttr("args", "list(string)", false),
-		"cap_add":    hclspec.NewAttr("cap_add", "list(string)", false),
-		"cap_drop":   hclspec.NewAttr("cap_drop", "list(string)", false),
-		"cwd":        hclspec.NewAttr("cwd", "string", false),
-		"devices":    hclspec.NewAttr("devices", "list(string)", false),
-		"privileged": hclspec.NewAttr("privileged", "bool", false),
-		"pids_limit": hclspec.NewAttr("pids_limit", "number", false),
-		"pid_mode":   hclspec.NewAttr("pid_mode", "string", false),
-		"hostname":   hclspec.NewAttr("hostname", "string", false),
+		"image":       hclspec.NewAttr("image", "string", true),
+		"command":     hclspec.NewAttr("command", "string", false),
+		"args":        hclspec.NewAttr("args", "list(string)", false),
+		"annotations": hclspec.NewAttr("annotations", "list(map(string))", false),
+		"cap_add":     hclspec.NewAttr("cap_add", "list(string)", false),
+		"cap_drop":    hclspec.NewAttr("cap_drop", "list(string)", false),
+		"cwd":         hclspec.NewAttr("cwd", "string", false),
+		"devices":     hclspec.NewAttr("devices", "list(string)", false),
+		"privileged":  hclspec.NewAttr("privileged", "bool", false),
+		"pids_limit":  hclspec.NewAttr("pids_limit", "number", false),
+		"pid_mode":    hclspec.NewAttr("pid_mode", "string", false),
+		"hostname":    hclspec.NewAttr("hostname", "string", false),
 		"host_dns": hclspec.NewDefault(
 			hclspec.NewAttr("host_dns", "bool", false),
 			hclspec.NewLiteral("true"),
@@ -119,6 +120,7 @@ var (
 		),
 		"extra_hosts": hclspec.NewAttr("extra_hosts", "list(string)", false),
 		"entrypoint":  hclspec.NewAttr("entrypoint", "list(string)", false),
+
 		"memory_swap": hclspec.NewDefault(
 			hclspec.NewAttr("memory_swap", "string", false),
 			hclspec.NewLiteral(`"0m"`),
@@ -214,6 +216,7 @@ type TaskConfig struct {
 	ReadOnlyRootfs   bool               `codec:"readonly_rootfs"`
 	HostNetwork      bool               `codec:"host_network"`
 	Auth             RegistryAuth       `codec:"auth"`
+	Annotations      hclutils.MapStrStr `codec:"annotations"`
 	Mounts           []Mount            `codec:"mounts"`
 	MemorySwap       string             `codec:"memory_swap"`
 	MemorySwappiness int64              `codec:"memory_swappiness"`
@@ -487,6 +490,8 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	if cfg.NetworkIsolation != nil && cfg.NetworkIsolation.Path != "" {
 		containerConfig.NetworkNamespacePath = cfg.NetworkIsolation.Path
 	}
+
+	containerConfig.Annotations = driverConfig.Annotations
 
 	// memory and cpu are coming from the resources stanza of the nomad job.
 	// https://www.nomadproject.io/docs/job-specification/resources

@@ -39,7 +39,7 @@ cleanup() {
        mv agent.hcl.bkp agent.hcl
     fi
     sudo systemctl restart nomad
-    is_systemd_service_active "nomad.service" false 
+    is_systemd_service_active "nomad.service" true
 }
 
 trap cleanup EXIT
