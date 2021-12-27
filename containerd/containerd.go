@@ -31,6 +31,8 @@ import (
 	refdocker "github.com/containerd/containerd/reference/docker"
 	remotesdocker "github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/go-units"
+	"github.com/hashicorp/nomad/drivers/shared/hostnames"
+	"github.com/hashicorp/nomad/plugins/drivers"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -114,7 +116,7 @@ func (d *Driver) pullImage(imageName, imagePullTimeout string, auth *RegistryAut
 	return d.client.Pull(ctxWithTimeout, named.String(), pullOpts...)
 }
 
-func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
+func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig, cfg *drivers.TaskConfig) (containerd.Container, error) {
 	if config.Command != "" && config.Entrypoint != nil {
 		return nil, fmt.Errorf("Both command and entrypoint are set. Only one of them needs to be set.")
 	}
@@ -198,13 +200,6 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		opts = append(opts, oci.WithRootFSReadonly())
 	}
 
-	// Enable host network.
-	// WithHostHostsFile bind-mounts the host's /etc/hosts into the container as readonly.
-	// WithHostResolvconf bind-mounts the host's /etc/resolv.conf into the container as readonly.
-	if config.HostNetwork {
-		opts = append(opts, oci.WithHostNamespace(specs.NetworkNamespace), oci.WithHostHostsFile, oci.WithHostResolvconf)
-	}
-
 	// Add capabilities.
 	if len(config.CapAdd) > 0 {
 		opts = append(opts, oci.WithAddedCapabilities(config.CapAdd))
@@ -278,33 +273,37 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		mounts = append(mounts, allocMount)
 	}
 
-	// User will specify extra_hosts to be added to container's /etc/hosts.
-	// If host_network=true, extra_hosts will be added to host's /etc/hosts.
-	// If host_network=false, extra hosts will be added to the default /etc/hosts provided to the container.
-	// If the user doesn't set anything (host_network, extra_hosts), a default /etc/hosts will be provided to the container.
-	var extraHostsMount specs.Mount
+	var etcHostMount specs.Mount
 	hostsFile := containerConfig.TaskDirSrc + "/etc_hosts"
-	if len(config.ExtraHosts) > 0 {
-		if config.HostNetwork {
-			if err := etchosts.CopyEtcHosts(hostsFile); err != nil {
-				return nil, err
-			}
-		} else {
-			if err := etchosts.BuildEtcHosts(hostsFile); err != nil {
-				return nil, err
-			}
+	if config.HostNetwork {
+		opts = append(opts, oci.WithHostNamespace(specs.NetworkNamespace), oci.WithHostHostsFile, oci.WithHostResolvconf)
+		if err := etchosts.CopyEtcHosts(hostsFile); err != nil {
+			return nil, err
 		}
 		if err := etchosts.AddExtraHosts(hostsFile, config.ExtraHosts); err != nil {
 			return nil, err
 		}
-		extraHostsMount = buildMountpoint("bind", "/etc/hosts", hostsFile, []string{"rbind", "rw"})
-		mounts = append(mounts, extraHostsMount)
-	} else if !config.HostNetwork {
+		etcHostMount = buildMountpoint("bind", "/etc/hosts", hostsFile, []string{"rbind", "rw"})
+		mounts = append(mounts, etcHostMount)
+	} else if cfg.NetworkIsolation != nil {
+		mountInfo, err := hostnames.GenerateEtcHostsMount(
+			cfg.TaskDir().Dir, cfg.NetworkIsolation, config.ExtraHosts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build mount for /etc/hosts: %v", err)
+		}
+		if mountInfo != nil {
+			etcHostMount = buildMountpoint("bind", mountInfo.TaskPath, mountInfo.HostPath, []string{"rbind", "rw"})
+			mounts = append(mounts, etcHostMount)
+		}
+	} else {
 		if err := etchosts.BuildEtcHosts(hostsFile); err != nil {
 			return nil, err
 		}
-		extraHostsMount = buildMountpoint("bind", "/etc/hosts", hostsFile, []string{"rbind", "rw"})
-		mounts = append(mounts, extraHostsMount)
+		if err := etchosts.AddExtraHosts(hostsFile, config.ExtraHosts); err != nil {
+			return nil, err
+		}
+		etcHostMount = buildMountpoint("bind", "/etc/hosts", hostsFile, []string{"rbind", "rw"})
+		mounts = append(mounts, etcHostMount)
 	}
 
 	if len(mounts) > 0 {
