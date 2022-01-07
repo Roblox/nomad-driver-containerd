@@ -84,6 +84,8 @@ setup() {
 	# Change $(pwd) to /tmp
 	pushd /tmp
 
+	sudo mkdir -p /etc/containerd/
+
 	# Install containerd 1.5.5
 	curl -L -o containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
 	sudo tar -C /usr/local -xzf containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
@@ -120,6 +122,29 @@ EOF
         echo "INFO: Starting containerd daemon."
         sudo systemctl start containerd
 	is_systemd_service_active "containerd.service" false
+
+	# install gvisor and restart containerd service
+  ARCH=$(uname -m)
+  URL=https://storage.googleapis.com/gvisor/releases/release/latest/${ARCH}
+  wget -q ${URL}/runsc ${URL}/runsc.sha512 \
+  ${URL}/containerd-shim-runsc-v1 ${URL}/containerd-shim-runsc-v1.sha512
+  sha512sum -c runsc.sha512 \
+  -c containerd-shim-runsc-v1.sha512
+
+  rm -f *.sha512
+
+  sudo chmod a+rx runsc containerd-shim-runsc-v1
+  sudo mv runsc containerd-shim-runsc-v1 /usr/local/bin
+
+  sudo tee <<EOF /etc/containerd/config.toml >/dev/null
+version = 2
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  runtime_type = "io.containerd.runc.v2"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
+  runtime_type = "io.containerd.runsc.v1"
+EOF
+
+  sudo systemctl restart containerd
 
 	# Remove default golang (1.7.3) and install a custom version (1.17) of golang.
 	# This is required for supporting go mod, and to be able to compile nomad-driver-containerd.

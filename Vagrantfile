@@ -58,6 +58,21 @@ Vagrant.configure("2") do |config|
        rm -f nerdctl-0.11.1-linux-amd64.tar.gz
     fi
 
+    # Install gvisor/runsc
+    if [ ! -f "/usr/local/bin/runsc" ]; then
+        ARCH=$(uname -m)
+        URL=https://storage.googleapis.com/gvisor/releases/release/latest/${ARCH}
+        wget -q ${URL}/runsc ${URL}/runsc.sha512 \
+        ${URL}/containerd-shim-runsc-v1 ${URL}/containerd-shim-runsc-v1.sha512
+        sha512sum -c runsc.sha512 \
+        -c containerd-shim-runsc-v1.sha512
+
+        rm -f *.sha512
+
+        chmod a+rx runsc containerd-shim-runsc-v1
+        mv runsc containerd-shim-runsc-v1 /usr/local/bin
+    fi
+
     # Create source directory for privileged.nomad example job.
     mkdir -p /tmp/s1
 

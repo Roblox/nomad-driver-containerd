@@ -9,7 +9,7 @@ test_allow_privileged() {
 
     cp agent.hcl agent.hcl.bkp
 
-    sed -i '9 i \    allow_privileged = false' agent.hcl
+    sed -i '8 i \    allow_privileged = false' agent.hcl
     sudo systemctl restart nomad
     is_systemd_service_active "nomad.service" true
 
@@ -19,7 +19,7 @@ test_allow_privileged() {
     sleep 5s
 
     echo "INFO: Checking status of ${job_name} job."
-    alloc_id=$(nomad job status ${job_name}|grep failed|awk 'NR==1'|cut -d ' ' -f 1)
+    alloc_id=$(nomad job status ${job_name}|grep failed |awk 'NR==1'|cut -d ' ' -f 1)
     output=$(nomad alloc status $alloc_id)
     echo -e "$output" |grep "Running privileged jobs are not allowed" &>/dev/null
     if [ $? -ne 0 ];then
