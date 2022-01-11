@@ -135,6 +135,7 @@ var (
 			"source":  hclspec.NewAttr("source", "string", false),
 			"options": hclspec.NewAttr("options", "list(string)", false),
 		})),
+		"user": hclspec.NewAttr("user", "string", false),
 	})
 
 	// capabilities indicates what optional features this driver supports
@@ -198,6 +199,7 @@ type TaskConfig struct {
 	HostNetwork      bool               `codec:"host_network"`
 	Auth             RegistryAuth       `codec:"auth"`
 	Mounts           []Mount            `codec:"mounts"`
+	User             string             `codec:"user"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
