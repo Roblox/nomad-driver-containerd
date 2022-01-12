@@ -135,7 +135,6 @@ var (
 			"source":  hclspec.NewAttr("source", "string", false),
 			"options": hclspec.NewAttr("options", "list(string)", false),
 		})),
-		"user": hclspec.NewAttr("user", "string", false),
 	})
 
 	// capabilities indicates what optional features this driver supports
@@ -199,7 +198,6 @@ type TaskConfig struct {
 	HostNetwork      bool               `codec:"host_network"`
 	Auth             RegistryAuth       `codec:"auth"`
 	Mounts           []Mount            `codec:"mounts"`
-	User             string             `codec:"user"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
@@ -470,6 +468,8 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	containerConfig.MemoryLimit = cfg.Resources.NomadResources.Memory.MemoryMB * 1024 * 1024
 	containerConfig.MemoryHardLimit = cfg.Resources.NomadResources.Memory.MemoryMaxMB * 1024 * 1024
 	containerConfig.CPUShares = cfg.Resources.LinuxResources.CPUShares
+
+	containerConfig.User = cfg.User
 
 	container, err := d.createContainer(&containerConfig, &driverConfig)
 	if err != nil {

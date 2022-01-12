@@ -49,6 +49,7 @@ type ContainerConfig struct {
 	MemoryLimit           int64
 	MemoryHardLimit       int64
 	CPUShares             int64
+	User                  string
 }
 
 func (d *Driver) isContainerdRunning() (bool, error) {
@@ -321,8 +322,8 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		opts = append(opts, oci.WithLinuxNamespace(specs.LinuxNamespace{Type: specs.NetworkNamespace, Path: containerConfig.NetworkNamespacePath}))
 	}
 
-	if config.User != "" {
-		opts = append(opts, oci.WithUser(config.User))
+	if containerConfig.User != "" {
+		opts = append(opts, oci.WithUser(containerConfig.User))
 	}
 
 	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
