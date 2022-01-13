@@ -137,7 +137,7 @@ var (
 		),
 		"extra_hosts": hclspec.NewAttr("extra_hosts", "list(string)", false),
 		"entrypoint":  hclspec.NewAttr("entrypoint", "list(string)", false),
-
+		"labels":      hclspec.NewAttr("labels", "list(map(string))", false),
 		"memory_swap": hclspec.NewDefault(
 			hclspec.NewAttr("memory_swap", "string", false),
 			hclspec.NewLiteral(`"0m"`),
@@ -181,30 +181,30 @@ var (
 
 // Config contains configuration information for the plugin
 type Config struct {
-	Enabled           bool                `codec:"enabled"`
-	ContainerdRuntime string              `codec:"containerd_runtime"`
-	StatsInterval     string              `codec:"stats_interval"`
 	AllowPrivileged   bool                `codec:"allow_privileged"`
 	AllowRuntimes     []string            `codec:"allow_runtimes"`
-	allowRuntimes     map[string]struct{} `codec:"-"`
 	Auth              RegistryAuth        `codec:"auth"`
 	AuthHelper        RegistryAuthHelper  `codec:"auth_helper"`
+	ContainerdRuntime string              `codec:"containerd_runtime"`
+	Enabled           bool                `codec:"enabled"`
 	GPURuntimeName    string              `codec:"nvidia_runtime"`
+	StatsInterval     string              `codec:"stats_interval"`
+	allowRuntimes     map[string]struct{} `codec:"-"`
 }
 
 // Volume, bind, and tmpfs type mounts are supported.
 // Mount contains configuration information about a mountpoint.
 type Mount struct {
-	Type    string   `codec:"type"`
-	Target  string   `codec:"target"`
-	Source  string   `codec:"source"`
 	Options []string `codec:"options"`
+	Source  string   `codec:"source"`
+	Target  string   `codec:"target"`
+	Type    string   `codec:"type"`
 }
 
 // Auth info to pull image from registry.
 type RegistryAuth struct {
-	Username string `codec:"username"`
 	Password string `codec:"password"`
+	Username string `codec:"username"`
 }
 
 // RegistryAuthHelper info to pull image from registry when using helper binary.
@@ -215,33 +215,34 @@ type RegistryAuthHelper struct {
 // TaskConfig contains configuration information for a task that runs with
 // this plugin
 type TaskConfig struct {
-	Image            string             `codec:"image"`
-	Command          string             `codec:"command"`
+	Annotations      hclutils.MapStrStr `codec:"annotations"`
 	Args             []string           `codec:"args"`
+	Auth             RegistryAuth       `codec:"auth"`
 	CapAdd           []string           `codec:"cap_add"`
 	CapDrop          []string           `codec:"cap_drop"`
+	Command          string             `codec:"command"`
 	Cwd              string             `codec:"cwd"`
 	Devices          []string           `codec:"devices"`
+	Entrypoint       []string           `codec:"entrypoint"`
+	ExtraHosts       []string           `codec:"extra_hosts"`
+	HostDNS          bool               `codec:"host_dns"`
+	HostNetwork      bool               `codec:"host_network"`
+	Hostname         string             `codec:"hostname"`
+	Image            string             `codec:"image"`
+	ImagePullTimeout string             `codec:"image_pull_timeout"`
+	Labels           hclutils.MapStrStr `codec:"labels"`
+	MemorySwap       string             `codec:"memory_swap"`
+	MemorySwappiness int64              `codec:"memory_swappiness"`
+	Mounts           []Mount            `codec:"mounts"`
+	PidMode          string             `codec:"pid_mode"`
+	PidsLimit        int64              `codec:"pids_limit"`
+	Privileged       bool               `codec:"privileged"`
+	ReadOnlyRootfs   bool               `codec:"readonly_rootfs"`
+	Runtime          string             `codec:"runtime"`
 	Seccomp          bool               `codec:"seccomp"`
 	SeccompProfile   string             `codec:"seccomp_profile"`
 	ShmSize          string             `codec:"shm_size"`
 	Sysctl           hclutils.MapStrStr `codec:"sysctl"`
-	Privileged       bool               `codec:"privileged"`
-	PidsLimit        int64              `codec:"pids_limit"`
-	PidMode          string             `codec:"pid_mode"`
-	Hostname         string             `codec:"hostname"`
-	HostDNS          bool               `codec:"host_dns"`
-	ImagePullTimeout string             `codec:"image_pull_timeout"`
-	ExtraHosts       []string           `codec:"extra_hosts"`
-	Entrypoint       []string           `codec:"entrypoint"`
-	Runtime          string             `codec:"runtime"`
-	ReadOnlyRootfs   bool               `codec:"readonly_rootfs"`
-	HostNetwork      bool               `codec:"host_network"`
-	Auth             RegistryAuth       `codec:"auth"`
-	Annotations      hclutils.MapStrStr `codec:"annotations"`
-	Mounts           []Mount            `codec:"mounts"`
-	MemorySwap       string             `codec:"memory_swap"`
-	MemorySwappiness int64              `codec:"memory_swappiness"`
 }
 
 // TaskState is the runtime state which is encoded in the handle returned to
@@ -249,10 +250,10 @@ type TaskConfig struct {
 // This information is needed to rebuild the task state and handler during
 // recovery.
 type TaskState struct {
-	StartedAt     time.Time
 	ContainerName string
-	StdoutPath    string
+	StartedAt     time.Time
 	StderrPath    string
+	StdoutPath    string
 }
 
 type Driver struct {
@@ -519,6 +520,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 
 	containerConfig.Annotations = driverConfig.Annotations
+	containerConfig.Labels = driverConfig.Labels
 
 	// memory and cpu are coming from the resources stanza of the nomad job.
 	// https://www.nomadproject.io/docs/job-specification/resources

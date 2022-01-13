@@ -118,6 +118,7 @@ Valid options for `containerd_runtime` (**Driver Config**).
 | **pid_mode** | string | no | `host` or not set (default). Set to `host` to share the PID namespace with the host. |
 | **hostname** | string | no | The hostname to assign to the container. When launching more than one of a task (using `count`) with this option set, every container the task starts will have the same hostname. |
 | **host_dns** | bool | no | Default (`true`). By default, a container launched using `containerd-driver` will use host `/etc/resolv.conf`. This is similar to [`docker behavior`](https://docs.docker.com/config/containers/container-networking/#dns-services). However, if you don't want to use host DNS, you can turn off this flag by setting `host_dns=false`. |
+| **labels** | map[string]string | no | A map of labels to set on the container. |
 | **memory_swap** | string| no | Default ("0"). By default, no swap is used by the container. If you want to use swap, you can set `memory_swap` to a string representing the size of the swap. The host instance will also need to have swap enabled, along with swap being larger than the resource memory declared. |
 | **memory_swappiness** | int64 | no | Default(0). By default, the container will not be swapped out of memory. If you want to swap out of memory, you can set `memory_swappiness` to a float value between 0 and 100. |
 | **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L395). |

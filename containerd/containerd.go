@@ -42,25 +42,26 @@ import (
 )
 
 type ContainerConfig struct {
+	AllocDirDest          string
+	AllocDirSrc           string
 	Annotations           map[string]string
-	Image                 containerd.Image
+	CPUShares             int64
 	ContainerName         string
 	ContainerSnapshotName string
-	NetworkNamespacePath  string
-	SecretsDirSrc         string
-	TaskDirSrc            string
-	AllocDirSrc           string
-	SecretsDirDest        string
-	TaskDirDest           string
-	AllocDirDest          string
 	Env                   []string
-	MemoryLimit           int64
+	GPUCapabilities       []nvidia.Capability
+	GPUDevices            []string
+	Image                 containerd.Image
+	Labels                map[string]string
 	MemoryHardLimit       int64
+	MemoryLimit           int64
 	MemorySwap            int64
 	MemorySwappiness      int64
-	CPUShares             int64
-	GPUDevices            []string
-	GPUCapabilities       []nvidia.Capability
+	NetworkNamespacePath  string
+	SecretsDirDest        string
+	SecretsDirSrc         string
+	TaskDirDest           string
+	TaskDirSrc            string
 }
 
 func (d *Driver) isContainerdRunning() (bool, error) {
@@ -479,6 +480,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		ctxWithTimeout,
 		containerConfig.ContainerName,
 		buildRuntime(d.config.ContainerdRuntime, config.Runtime),
+		containerd.WithAdditionalContainerLabels(containerConfig.Labels),
 		containerd.WithNewSnapshot(containerConfig.ContainerSnapshotName, containerConfig.Image),
 		containerd.WithNewSpec(opts...),
 	)
