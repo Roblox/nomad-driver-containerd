@@ -469,6 +469,8 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	containerConfig.MemoryHardLimit = cfg.Resources.NomadResources.Memory.MemoryMaxMB * 1024 * 1024
 	containerConfig.CPUShares = cfg.Resources.LinuxResources.CPUShares
 
+	containerConfig.User = cfg.User
+
 	container, err := d.createContainer(&containerConfig, &driverConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
