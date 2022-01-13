@@ -20,8 +20,11 @@ package containerd
 import (
 	"context"
 	"fmt"
+	"strings"
 	"syscall"
 	"time"
+
+	"github.com/containerd/containerd/contrib/nvidia"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
@@ -58,6 +61,12 @@ const (
 	// this is used to allow modification and migration of the task schema
 	// used by the plugin
 	taskHandleVersion = 1
+
+	// Nvidia-container-runtime environment variable names
+	nvidiaVisibleDevices = "NVIDIA_VISIBLE_DEVICES"
+
+	// nvidiaDriverCapabilities, environment variable containing a list which capabilities to be given to the container
+	nvidiaDriverCapabilities = "NVIDIA_DRIVER_CAPABILITIES"
 )
 
 var (
@@ -84,6 +93,10 @@ var (
 			hclspec.NewAttr("allow_privileged", "bool", false),
 			hclspec.NewLiteral("true"),
 		),
+		"allow_runtimes": hclspec.NewDefault(
+			hclspec.NewAttr("allow_runtimes", "list(string)", false),
+			hclspec.NewLiteral(`["runc", "runsc", "nvidia"]`),
+		),
 		"auth": hclspec.NewBlock("auth", false, hclspec.NewObject(map[string]*hclspec.Spec{
 			"username": hclspec.NewAttr("username", "string", true),
 			"password": hclspec.NewAttr("password", "string", true),
@@ -91,6 +104,10 @@ var (
 		"auth_helper": hclspec.NewBlock("auth_helper", false, hclspec.NewObject(map[string]*hclspec.Spec{
 			"helper": hclspec.NewAttr("helper", "string", true),
 		})),
+		"nvidia_runtime": hclspec.NewDefault(
+			hclspec.NewAttr("nvidia_runtime", "string", false),
+			hclspec.NewLiteral(`"nvidia"`),
+		),
 	})
 
 	// taskConfigSpec is the specification of the plugin's configuration for
@@ -164,12 +181,15 @@ var (
 
 // Config contains configuration information for the plugin
 type Config struct {
-	Enabled           bool               `codec:"enabled"`
-	ContainerdRuntime string             `codec:"containerd_runtime"`
-	StatsInterval     string             `codec:"stats_interval"`
-	AllowPrivileged   bool               `codec:"allow_privileged"`
-	Auth              RegistryAuth       `codec:"auth"`
-	AuthHelper        RegistryAuthHelper `codec:"auth_helper"`
+	Enabled           bool                `codec:"enabled"`
+	ContainerdRuntime string              `codec:"containerd_runtime"`
+	StatsInterval     string              `codec:"stats_interval"`
+	AllowPrivileged   bool                `codec:"allow_privileged"`
+	AllowRuntimes     []string            `codec:"allow_runtimes"`
+	allowRuntimes     map[string]struct{} `codec:"-"`
+	Auth              RegistryAuth        `codec:"auth"`
+	AuthHelper        RegistryAuthHelper  `codec:"auth_helper"`
+	GPURuntimeName    string              `codec:"nvidia_runtime"`
 }
 
 // Volume, bind, and tmpfs type mounts are supported.
@@ -347,6 +367,11 @@ func (d *Driver) SetConfig(cfg *base.Config) error {
 		}
 	}
 
+	config.allowRuntimes = make(map[string]struct{}, len(config.AllowRuntimes))
+	for _, r := range config.AllowRuntimes {
+		config.allowRuntimes[r] = struct{}{}
+	}
+
 	// Save the configuration to the plugin
 	d.config = &config
 
@@ -507,6 +532,58 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	}
 	containerConfig.MemorySwap = swap
 	containerConfig.MemorySwappiness = driverConfig.MemorySwappiness
+
+	//Used in conjunction with the nomad-device-nvidia plugin, this environment variable will be set when having a device constraint of an `nvidia/gpu`.
+	//Check for runtimes, if GPU environment variable(`nvidiaVisibleDevices|NVIDIA_VISIBLE_DEVICES`) is set.
+	//Verify that runtime is allowed.
+	var containerRuntime string
+	if driverConfig.Runtime != "" {
+		containerRuntime = driverConfig.Runtime
+	} else {
+		containerRuntime = ""
+	}
+
+	if nvidiaDeviceIds, ok := cfg.DeviceEnv[nvidiaVisibleDevices]; ok {
+		if containerRuntime != "" && containerRuntime != d.config.GPURuntimeName {
+			return nil, nil, fmt.Errorf("conflicting runtime requests: gpu runtime %q conflicts with task runtime %q", d.config.GPURuntimeName, containerRuntime)
+		}
+		containerRuntime = d.config.GPURuntimeName
+
+		deviceIds := strings.Split(nvidiaDeviceIds, ",")
+		containerConfig.GPUDevices = deviceIds
+	}
+
+	if _, ok := d.config.allowRuntimes[containerRuntime]; !ok && containerRuntime != "" {
+		return nil, nil, fmt.Errorf("requested runtime %q is not allowed(%q)", containerRuntime, d.config.allowRuntimes)
+	}
+
+	//Check for capabilities based on task environment variables, if none are set, use 'utility' if gpus are part of
+	//definition.
+	if nvidiaCaps, ok := cfg.Env[nvidiaDriverCapabilities]; ok && containerRuntime == d.config.GPURuntimeName {
+		allCaps := make(map[string]nvidia.Capability)
+		selectedCapabilities := make([]nvidia.Capability, 0)
+
+		for _, capability := range nvidia.AllCaps() {
+			allCaps[string(capability)] = capability
+		}
+
+		for _, capability := range strings.Split(nvidiaCaps, ",") {
+			if capability == "all" {
+				selectedCapabilities = nvidia.AllCaps()
+				break
+			}
+
+			if capabilityName, ok := allCaps[capability]; ok {
+				selectedCapabilities = append(selectedCapabilities, capabilityName)
+			}
+		}
+
+		containerConfig.GPUCapabilities = selectedCapabilities
+	} else if _, ok := cfg.Env[nvidiaDriverCapabilities]; !ok && containerRuntime == d.config.GPURuntimeName {
+		//If the nvidia driver capabilities are not set, then set to 'utility' capability.
+		//Which allows nvidia-smi and NVML to be used.
+		containerConfig.GPUCapabilities = []nvidia.Capability{nvidia.Utility}
+	}
 
 	container, err := d.createContainer(&containerConfig, &driverConfig)
 	if err != nil {

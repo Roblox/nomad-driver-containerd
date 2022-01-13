@@ -32,6 +32,7 @@ import (
 	etchosts "github.com/Roblox/nomad-driver-containerd/etchosts"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	nvidia "github.com/containerd/containerd/contrib/nvidia"
 	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/oci"
 	refdocker "github.com/containerd/containerd/reference/docker"
@@ -58,6 +59,8 @@ type ContainerConfig struct {
 	MemorySwap            int64
 	MemorySwappiness      int64
 	CPUShares             int64
+	GPUDevices            []string
+	GPUCapabilities       []nvidia.Capability
 }
 
 func (d *Driver) isContainerdRunning() (bool, error) {
@@ -374,6 +377,15 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		hostname = config.Hostname
 	}
 	opts = append(opts, oci.WithHostname(hostname))
+
+	// Set GPU
+	if len(containerConfig.GPUDevices) > 0 {
+		nvidiaOpts := make([]nvidia.Opts, 0)
+		nvidiaOpts = append(nvidiaOpts, nvidia.WithDeviceUUIDs(containerConfig.GPUDevices...))
+		nvidiaOpts = append(nvidiaOpts, nvidia.WithCapabilities(containerConfig.GPUCapabilities...))
+
+		opts = append(opts, nvidia.WithGPUs(nvidiaOpts...))
+	}
 
 	// Add linux devices into the container.
 	for _, device := range config.Devices {

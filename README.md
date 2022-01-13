@@ -89,8 +89,10 @@ To interact with `images` and `containers` directly, you can use [`nerdctl`](htt
 | **containerd_runtime** | string | no | `io.containerd.runc.v2` | Runtime for containerd. |
 | **stats_interval** | string | no | 1s | Interval for collecting `TaskStats`. |
 | **allow_privileged** | bool | no | true | If set to `false`, driver will deny running privileged jobs. |
+| **allow_runtimes** | []string | no | `["runc", "runsc", "nvidia"]` | Runtimes that are allowed to be used. |
 | **auth** | block | no | N/A | Provide authentication for a private registry. See [Authentication](#authentication-private-registry) for more details. |
 | **auth_helper** | block | no | N/A | Lookup authentication information from external sources. See [Authentication Helper](example/agent-auth-helper.hcl) for more details. Order of precedence Job Auth, Config Auth, Config Auth Helper.  |
+| **nvidia_runtime** | string | no | `nvidia` | Runtime for nvidia. This is generally not required to specify since GPUs are part of OCI hooks using `runc` as the runtime. |
 
 ## Supported Runtimes
 
@@ -99,6 +101,7 @@ Valid options for `containerd_runtime` (**Driver Config**).
 - `io.containerd.runc.v1`: `runc` runtime that supports a single container.
 - `io.containerd.runc.v2` (Default): `runc` runtime that supports multiple containers per shim.
 - `io.containerd.runsc.v1`: `gVisor` is an OCI compliant container runtime which provides better security than `runc`. They achieve this by implementing a user space kernel written in go, which implements a substantial portion of the Linux system call interface. For more details, please check their [`official documentation`](https://gvisor.dev/docs/)
+- `io.containerd.nvidia.v1`: `nvidia` is a container runtime that supports GPU devices.
 
 **Task Config**
 
