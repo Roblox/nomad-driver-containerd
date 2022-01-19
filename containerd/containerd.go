@@ -251,6 +251,12 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 			return nil, fmt.Errorf("Options cannot be empty for mount type: %s. You need to atleast pass rbind and ro.", mount.Type)
 		}
 
+		// Allow paths relative to $NOMAD_TASK_DIR.
+		// More details: https://github.com/Roblox/nomad-driver-containerd/issues/116#issuecomment-983171458
+		if mount.Type == "bind" && strings.HasPrefix(mount.Source, "local") {
+			mount.Source = containerConfig.TaskDirSrc + mount.Source[5:]
+		}
+
 		m := buildMountpoint(mount.Type, mount.Target, mount.Source, mount.Options)
 		mounts = append(mounts, m)
 	}
