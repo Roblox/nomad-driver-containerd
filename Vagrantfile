@@ -36,12 +36,12 @@ Vagrant.configure("2") do |config|
       rm -f go1.17.linux-amd64.tar.gz
     fi
 
-    # Install nomad-1.1.4
+    # Install nomad-1.1.12
     if [ ! -f "/usr/bin/nomad" ]; then
-      wget --quiet https://releases.hashicorp.com/nomad/1.1.4/nomad_1.1.4_linux_amd64.zip
-      unzip nomad_1.1.4_linux_amd64.zip -d /usr/bin
+      wget --quiet https://releases.hashicorp.com/nomad/1.1.12/nomad_1.1.12_linux_amd64.zip
+      unzip nomad_1.1.12_linux_amd64.zip -d /usr/bin
       chmod +x /usr/bin/nomad
-      rm -f nomad_1.1.4_linux_amd64.zip
+      rm -f nomad_1.1.12_linux_amd64.zip
     fi
 
     # Install containerd-1.5.5
