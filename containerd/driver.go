@@ -37,6 +37,7 @@ import (
 	"github.com/hashicorp/nomad/plugins/drivers"
 	"github.com/hashicorp/nomad/plugins/shared/hclspec"
 	"github.com/hashicorp/nomad/plugins/shared/structs"
+	"github.com/opencontainers/runc/libcontainer/cgroups"
 )
 
 const (
@@ -259,7 +260,13 @@ func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 	// Calls to containerd API are namespaced.
 	// "nomad" is the namespace that will be used for all nomad-driver-containerd
 	// related containerd API calls.
-	ctxContainerd := namespaces.WithNamespace(context.Background(), "nomad")
+	namespace := "nomad"
+	// Unless we are operating in cgroups.v2 mode, in which case we use the
+	// name "nomad.slice", which ends up being the cgroup parent.
+	if cgroups.IsCgroup2UnifiedMode() {
+		namespace = "nomad.slice"
+	}
+	ctxContainerd := namespaces.WithNamespace(context.Background(), namespace)
 
 	return &Driver{
 		eventer:        eventer.NewEventer(ctx, logger),
@@ -428,8 +435,13 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	handle := drivers.NewTaskHandle(taskHandleVersion)
 	handle.Config = cfg
 
+	// Use Nomad's docker naming convention for the container name
 	// https://www.nomadproject.io/docs/drivers/docker#container-name
 	containerName := cfg.Name + "-" + cfg.AllocID
+	if cgroups.IsCgroup2UnifiedMode() {
+		// In cgroup.v2 mode, the name is slightly different.
+		containerName = fmt.Sprintf("%s.%s.scope", cfg.AllocID, cfg.Name)
+	}
 	containerConfig.ContainerName = containerName
 
 	var err error
