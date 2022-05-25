@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/go-hclog v0.14.1
 	github.com/hashicorp/go-uuid v1.0.2
 	github.com/hashicorp/nomad v1.1.12
-	github.com/opencontainers/runc v1.1.0
+	github.com/opencontainers/runc v1.1.2
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/spf13/cobra v1.1.3
 )
