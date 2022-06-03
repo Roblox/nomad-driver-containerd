@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/consul-template v0.25.2
 	github.com/hashicorp/go-hclog v0.14.1
 	github.com/hashicorp/go-uuid v1.0.2
-	github.com/hashicorp/nomad v1.1.12
+	github.com/hashicorp/nomad v1.1.14
 	github.com/opencontainers/runc v1.1.2
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/spf13/cobra v1.1.3
@@ -100,7 +100,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220224120231-95c6836cb0e7 // indirect
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
