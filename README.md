@@ -8,7 +8,7 @@
 
 We are actively looking for contributors and maintainers for this project.
 If you have experience in container internals e.g. cgroups, namespaces, or have contributed to any open source projects
-around containers e.g. docker (moby/moby), containerd, nerdctl, podman etc or build tooling which involves dealing with
+around containers e.g. [`docker`](https://github.com/moby/moby), [`containerd`](https://github.com/containerd/containerd), [`nerdctl`](https://github.com/containerd/nerdctl), [`podman`](https://github.com/containers/podman) etc or build tooling which involves dealing with
 container internals, and are interested in contributing to this project, I would love to talk to you!
 Golang experience is preferred but not required.
 
