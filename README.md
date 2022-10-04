@@ -6,6 +6,14 @@
 
 <img src="images/nomad.png" width="232" height="100" />&nbsp;<img src="images/docker.png" width="116" height="100" />&nbsp;<img src="images/containerd.png" width="285" height="100" />
 
+We are actively looking for contributors and maintainers for this project.
+If you have experience in container internals e.g. cgroups, namespaces, or have contributed to any open source projects
+around containers e.g. docker (moby/moby), containerd, nerdctl, podman etc or build tooling which involves dealing with
+container internals, and are interested in contributing to this project, I would love to talk to you!
+Golang experience is preferred but not required.
+
+Please reach out to me [`@_shishir_m`](https://twitter.com/_shishir_m) or open an issue in this repository with your contact details, if you are interested in contributing to this project.
+
 ## Overview
 Nomad task driver for launching containers using containerd.
 
