@@ -28,12 +28,12 @@ Vagrant.configure("2") do |config|
     # without keeping HOME env, 'sudo make test' will try to find files under /root/go/
     echo "Defaults env_keep += HOME" | sudo tee /etc/sudoers.d/keep_home
 
-    # Install golang-1.17
+    # Install golang-1.19.1
     if [ ! -f "/usr/local/go/bin/go" ]; then
-      curl -s -L -o go1.17.linux-amd64.tar.gz https://dl.google.com/go/go1.17.linux-amd64.tar.gz
-      sudo tar -C /usr/local -xzf go1.17.linux-amd64.tar.gz
+      curl -s -L -o go1.19.1.linux-amd64.tar.gz https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz
+      sudo tar -C /usr/local -xzf go1.19.1.linux-amd64.tar.gz
       sudo chmod +x /usr/local/go
-      rm -f go1.17.linux-amd64.tar.gz
+      rm -f go1.19.1.linux-amd64.tar.gz
     fi
 
     # Install nomad-1.1.12

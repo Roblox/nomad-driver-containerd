@@ -11,7 +11,7 @@ if [ -e /home/runner ]; then
 else
        export GOPATH=$HOME/go
 fi
-export GO_VERSION=1.17
+export GO_VERSION=1.19.1
 export SRCDIR=`dirname $0`
 source $SRCDIR/utils.sh
 
@@ -121,11 +121,11 @@ EOF
         sudo systemctl start containerd
 	is_systemd_service_active "containerd.service" false
 
-	# Remove default golang (1.7.3) and install a custom version (1.17) of golang.
+	# Remove default golang (1.7.3) and install a custom version (1.19.1) of golang.
 	# This is required for supporting go mod, and to be able to compile nomad-driver-containerd.
 	sudo rm -rf /usr/local/go
 
-	# Install golang 1.17
+	# Install golang 1.19.1
 	curl -L -o go${GO_VERSION}.linux-amd64.tar.gz https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz
 	sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 	sudo chmod +x /usr/local/go
