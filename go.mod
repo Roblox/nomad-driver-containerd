@@ -8,7 +8,7 @@ require (
 	github.com/containerd/typeurl v1.0.2
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go-units v0.4.0
-	github.com/hashicorp/consul-template v0.25.2
+	github.com/hashicorp/consul-template v0.27.3
 	github.com/hashicorp/go-hclog v1.2.2
 	github.com/hashicorp/go-uuid v1.0.2
 	github.com/hashicorp/nomad v1.2.13
