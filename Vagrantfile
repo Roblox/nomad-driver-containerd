@@ -5,7 +5,7 @@ VAGRANTFILE_API_VERSION = "2"
 # Create box
 Vagrant.configure("2") do |config|
   config.vm.define "containerd-linux"
-  config.vm.box = "hashicorp/bionic64"
+  config.vm.box = "generic/ubuntu2204"
   config.vm.provider "libvirt" do |v, override|
     override.vm.box = "generic/debian10"
     override.vm.synced_folder ".", "/home/vagrant/go/src/github.com/Roblox/nomad-driver-containerd", type: "nfs", nfs_version: 4, nfs_udp: false
@@ -20,7 +20,7 @@ Vagrant.configure("2") do |config|
   end
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
-    apt-get install -y unzip gcc runc jq
+    apt-get install -y unzip gcc runc jq make
     echo "export GOPATH=/home/vagrant/go" >> /home/vagrant/.bashrc
     echo "export PATH=$PATH:/usr/local/go/bin" >> /home/vagrant/.bashrc
     echo "export CONTAINERD_NAMESPACE=nomad" >> /home/vagrant/.bashrc
