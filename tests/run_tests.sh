@@ -11,7 +11,7 @@ if [ -e /home/runner ]; then
 else
        export GOPATH=$HOME/go
 fi
-export GO_VERSION=1.19.1
+export GO_VERSION=1.21.5
 export SRCDIR=`dirname $0`
 source $SRCDIR/utils.sh
 
