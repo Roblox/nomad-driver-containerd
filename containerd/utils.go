@@ -20,10 +20,14 @@ package containerd
 import (
 	"context"
 	"os"
+	"strings"
 	"syscall"
 
+	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/plugin"
+	runcoptions "github.com/containerd/containerd/runtime/v2/runc/options"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -98,4 +102,31 @@ func WithMemoryLimits(soft, hard int64) oci.SpecOpts {
 		}
 		return nil
 	}
+}
+
+// buildRuntime sets the container runtime e.g. runc or runsc (gVisor).
+func buildRuntime(pluginRuntime, jobRuntime string) containerd.NewContainerOpts {
+	var (
+		runcOpts    runcoptions.Options
+		runtimeOpts interface{} = &runcOpts
+	)
+
+	// plugin.RuntimeRuncV2 = io.containerd.runc.v2
+	runtime := plugin.RuntimeRuncV2
+
+	if jobRuntime != "" {
+		if strings.HasPrefix(jobRuntime, "io.containerd.runc.") {
+			runtime = jobRuntime
+		} else {
+			runcOpts.BinaryName = jobRuntime
+		}
+	} else if pluginRuntime != "" {
+		if strings.HasPrefix(pluginRuntime, "io.containerd.runc.") {
+			runtime = pluginRuntime
+		} else {
+			runcOpts.BinaryName = pluginRuntime
+		}
+	}
+
+	return containerd.WithRuntime(runtime, runtimeOpts)
 }
