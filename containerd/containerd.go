@@ -217,6 +217,18 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		opts = append(opts, oci.WithDroppedCapabilities(config.CapDrop))
 	}
 
+	// This translates to docker create/run --cpuset-cpus option.
+	// --cpuset-cpus limit the specific CPUs or cores a container can use.
+	if config.CPUSetCPUs != "" {
+		opts = append(opts, oci.WithCPUs(config.CPUSetCPUs))
+	}
+
+	// --cpuset-mems is the list of memory nodes on which processes
+	// in this cpuset are allowed to allocate memory.
+	if config.CPUSetMEMs != "" {
+		opts = append(opts, oci.WithCPUsMems(config.CPUSetMEMs))
+	}
+
 	// Set current working directory (cwd).
 	if config.Cwd != "" {
 		opts = append(opts, oci.WithProcessCwd(config.Cwd))
