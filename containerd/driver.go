@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/defaults"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/hashicorp/consul-template/signals"
 	"github.com/hashicorp/go-hclog"
@@ -78,6 +79,10 @@ var (
 		"enabled": hclspec.NewDefault(
 			hclspec.NewAttr("enabled", "bool", false),
 			hclspec.NewLiteral("true"),
+		),
+		"containerd_address": hclspec.NewDefault(
+			hclspec.NewAttr("containerd_address", "string", false),
+			hclspec.NewLiteral(defaults.DefaultAddress),
 		),
 		"containerd_runtime": hclspec.NewAttr("containerd_runtime", "string", true),
 		"stats_interval":     hclspec.NewAttr("stats_interval", "string", false),
@@ -152,6 +157,7 @@ var (
 // Config contains configuration information for the plugin
 type Config struct {
 	Enabled           bool         `codec:"enabled"`
+	ContainerdAddress string       `codec:"containerd_address"`
 	ContainerdRuntime string       `codec:"containerd_runtime"`
 	StatsInterval     string       `codec:"stats_interval"`
 	AllowPrivileged   bool         `codec:"allow_privileged"`
@@ -249,14 +255,6 @@ func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 	ctx, cancel := context.WithCancel(context.Background())
 	logger = logger.Named(PluginName)
 
-	// This will create a new containerd client which will talk to
-	// default containerd socket path.
-	client, err := containerd.New("/run/containerd/containerd.sock")
-	if err != nil {
-		logger.Error("Error in creating containerd client", "err", err)
-		return nil
-	}
-
 	// Calls to containerd API are namespaced.
 	// "nomad" is the namespace that will be used for all nomad-driver-containerd
 	// related containerd API calls.
@@ -274,7 +272,6 @@ func NewPlugin(logger log.Logger) drivers.DriverPlugin {
 		tasks:          newTaskStore(),
 		ctx:            ctx,
 		ctxContainerd:  ctxContainerd,
-		client:         client,
 		signalShutdown: cancel,
 		logger:         logger,
 	}
@@ -324,10 +321,19 @@ func (d *Driver) ConfigSchema() (*hclspec.Spec, error) {
 // SetConfig is called by the client to pass the configuration for the plugin.
 func (d *Driver) SetConfig(cfg *base.Config) error {
 	var config Config
+	var err error
 	if len(cfg.PluginConfig) != 0 {
-		if err := base.MsgPackDecode(cfg.PluginConfig, &config); err != nil {
+		if err = base.MsgPackDecode(cfg.PluginConfig, &config); err != nil {
 			return err
 		}
+	}
+
+	// This will create a new containerd client which will talk to
+	// default containerd socket path.
+	d.client, err = containerd.New(config.ContainerdAddress)
+	if err != nil {
+		d.logger.Error("Error in creating containerd client", "err", err)
+		return err
 	}
 
 	// Save the configuration to the plugin
