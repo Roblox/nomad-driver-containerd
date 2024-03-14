@@ -88,7 +88,7 @@ func (d *Driver) parshAuth(auth *RegistryAuth) CredentialsOpt {
 func withResolver(creds CredentialsOpt) containerd.RemoteOpt {
 	resolver := remotesdocker.NewResolver(remotesdocker.ResolverOptions{
 		Hosts: remotesdocker.ConfigureDefaultRegistries(remotesdocker.WithAuthorizer(
-			remotesdocker.NewAuthorizer(nil, creds))),
+			remotesdocker.NewDockerAuthorizer(remotesdocker.WithAuthCreds(creds)))),
 	})
 	return containerd.WithResolver(resolver)
 }
