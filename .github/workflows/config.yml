@@ -12,16 +12,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run containerd-driver integration tests
         run: |
-          # Remove older version of golang.
-          sudo rm -f /usr/bin/go
-
-          # Install golang-1.17
-          export PATH=$PATH:/usr/local/go/bin
-          curl -s -L -o go1.17.linux-amd64.tar.gz https://dl.google.com/go/go1.17.linux-amd64.tar.gz
-          sudo tar -C /usr/local -xzf go1.17.linux-amd64.tar.gz
-          sudo chmod +x /usr/local/go
-          rm -f go1.17.linux-amd64.tar.gz
-
           mkdir -p /home/runner/go/src/github.com/Roblox
           ln -s /home/runner/work/nomad-driver-containerd/nomad-driver-containerd /home/runner/go/src/github.com/Roblox/nomad-driver-containerd
           cd /home/runner/go/src/github.com/Roblox/nomad-driver-containerd
