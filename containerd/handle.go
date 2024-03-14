@@ -93,7 +93,7 @@ func (h *taskHandle) IsRunning(ctxContainerd context.Context) (bool, error) {
 
 	status, err := h.task.Status(ctxWithTimeout)
 	if err != nil {
-		return false, fmt.Errorf("Error in getting task status: %v", err)
+		return false, fmt.Errorf("error in getting task status: %v", err)
 	}
 
 	return (status.Status == containerd.Running), nil
@@ -154,7 +154,7 @@ func (h *taskHandle) exec(ctx, ctxContainerd context.Context, taskID string, opt
 					h.logger.Error("Failed to resize terminal", "error", err)
 					return
 				}
-                        }
+			}
 		}
 	}()
 
