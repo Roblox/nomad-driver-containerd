@@ -447,7 +447,7 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 	var err error
 	containerConfig.Image, err = d.pullImage(driverConfig.Image, driverConfig.ImagePullTimeout, &driverConfig.Auth)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error in pulling image %s: %v", driverConfig.Image, err)
+		return nil, nil, fmt.Errorf("error in pulling image %s: %v", driverConfig.Image, err)
 	}
 
 	d.logger.Info(fmt.Sprintf("Successfully pulled %s image\n", containerConfig.Image.Name()))
@@ -485,13 +485,13 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 
 	container, err := d.createContainer(&containerConfig, &driverConfig)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error in creating container: %v", err)
+		return nil, nil, fmt.Errorf("error in creating container: %v", err)
 	}
 
 	d.logger.Info(fmt.Sprintf("Successfully created container with name: %s\n", containerName))
 	task, err := d.createTask(container, cfg.StdoutPath, cfg.StderrPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error in creating task: %v", err)
+		return nil, nil, fmt.Errorf("error in creating task: %v", err)
 	}
 
 	d.logger.Info(fmt.Sprintf("Successfully created task with ID: %s\n", task.ID()))
@@ -554,12 +554,12 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 
 	container, err := d.loadContainer(taskState.ContainerName)
 	if err != nil {
-		return fmt.Errorf("Error in recovering container: %v", err)
+		return fmt.Errorf("error in recovering container: %v", err)
 	}
 
 	task, err := d.getTask(container, taskState.StdoutPath, taskState.StderrPath)
 	if err != nil {
-		return fmt.Errorf("Error in recovering task: %v", err)
+		return fmt.Errorf("error in recovering task: %v", err)
 	}
 
 	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, 30*time.Second)
@@ -567,7 +567,7 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 
 	status, err := task.Status(ctxWithTimeout)
 	if err != nil {
-		return fmt.Errorf("Error in recovering task status: %v", err)
+		return fmt.Errorf("error in recovering task status: %v", err)
 	}
 
 	h := &taskHandle{
@@ -644,7 +644,7 @@ func (d *Driver) StopTask(taskID string, timeout time.Duration, signal string) e
 	}
 
 	if err := handle.shutdown(d.ctxContainerd, timeout, syscall.SIGTERM); err != nil {
-		return fmt.Errorf("Shutdown failed: %v", err)
+		return fmt.Errorf("shutdown failed: %v", err)
 	}
 
 	return nil
@@ -723,7 +723,7 @@ func (d *Driver) SignalTask(taskID string, signal string) error {
 	// for a list of supported signals.
 	sig, ok := signals.SignalLookup[signal]
 	if !ok {
-		return fmt.Errorf("Invalid signal: %s", signal)
+		return fmt.Errorf("invalid signal: %s", signal)
 	}
 
 	return handle.signal(d.ctxContainerd, sig)
@@ -743,5 +743,5 @@ func (d *Driver) ExecTaskStreaming(ctx context.Context, taskID string, opts *dri
 // This is an optional capability.
 func (d *Driver) ExecTask(taskID string, cmd []string, timeout time.Duration) (*drivers.ExecTaskResult, error) {
 	// TODO: implement driver specific logic to execute commands in a task.
-	return nil, fmt.Errorf("This driver does not support exec")
+	return nil, fmt.Errorf("this driver does not support exec")
 }

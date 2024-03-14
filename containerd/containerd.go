@@ -96,7 +96,7 @@ func withResolver(creds CredentialsOpt) containerd.RemoteOpt {
 func (d *Driver) pullImage(imageName, imagePullTimeout string, auth *RegistryAuth) (containerd.Image, error) {
 	pullTimeout, err := time.ParseDuration(imagePullTimeout)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse image_pull_timeout: %v", err)
+		return nil, fmt.Errorf("failed to parse image_pull_timeout: %v", err)
 	}
 
 	ctxWithTimeout, cancel := context.WithTimeout(d.ctxContainerd, pullTimeout)
@@ -117,7 +117,7 @@ func (d *Driver) pullImage(imageName, imagePullTimeout string, auth *RegistryAut
 
 func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskConfig) (containerd.Container, error) {
 	if config.Command != "" && config.Entrypoint != nil {
-		return nil, fmt.Errorf("Both command and entrypoint are set. Only one of them needs to be set.")
+		return nil, fmt.Errorf("both command and entrypoint are set. Only one of them needs to be set")
 	}
 
 	// Entrypoint or Command set by the user, to override entrypoint or cmd defined in the image.
@@ -146,7 +146,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	}
 
 	if !d.config.AllowPrivileged && config.Privileged {
-		return nil, fmt.Errorf("Running privileged jobs are not allowed. Set allow_privileged to true in plugin config to allow running privileged jobs.")
+		return nil, fmt.Errorf("running privileged jobs are not allowed. Set allow_privileged to true in plugin config to allow running privileged jobs")
 	}
 
 	// Enable privileged mode.
@@ -161,7 +161,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 
 	if config.PidMode != "" {
 		if strings.ToLower(config.PidMode) != "host" {
-			return nil, fmt.Errorf("Invalid pid_mode. Set pid_mode=host to enable host pid namespace.")
+			return nil, fmt.Errorf("invalid pid_mode. Set pid_mode=host to enable host pid namespace")
 		} else {
 			opts = append(opts, oci.WithHostNamespace(specs.PIDNamespace))
 		}
@@ -171,7 +171,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	if len(config.ShmSize) > 0 {
 		shmBytes, err := units.RAMInBytes(config.ShmSize)
 		if err != nil {
-			return nil, fmt.Errorf("Error in setting shm_size: %v", err)
+			return nil, fmt.Errorf("error in setting shm_size: %v", err)
 		}
 		opts = append(opts, oci.WithDevShmSize(shmBytes/1024))
 	}
@@ -182,7 +182,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	}
 
 	if !config.Seccomp && config.SeccompProfile != "" {
-		return nil, fmt.Errorf("seccomp must be set to true, if using a custom seccomp_profile.")
+		return nil, fmt.Errorf("seccomp must be set to true, if using a custom seccomp_profile")
 	}
 
 	// Enable default (or custom) seccomp profile.
@@ -249,7 +249,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 	mounts := make([]specs.Mount, 0)
 	for _, mount := range config.Mounts {
 		if (mount.Type == "bind" || mount.Type == "volume") && len(mount.Options) <= 0 {
-			return nil, fmt.Errorf("Options cannot be empty for mount type: %s. You need to atleast pass rbind and ro.", mount.Type)
+			return nil, fmt.Errorf("options cannot be empty for mount type: %s. You need to atleast pass rbind and ro", mount.Type)
 		}
 
 		// Allow paths relative to $NOMAD_TASK_DIR.
