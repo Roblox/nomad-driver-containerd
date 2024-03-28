@@ -25,15 +25,14 @@ import (
 	"syscall"
 	"time"
 
-	v1 "github.com/containerd/cgroups/stats/v1"
-	v2 "github.com/containerd/cgroups/v2/stats"
+	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
+	v2 "github.com/containerd/cgroups/v3/cgroup2/stats"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
-	"github.com/containerd/typeurl"
+	"github.com/containerd/typeurl/v2"
 	"github.com/hashicorp/go-hclog"
 	uuid "github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/nomad/client/stats"
-	hstats "github.com/hashicorp/nomad/helper/stats"
+	"github.com/hashicorp/nomad/client/lib/cpustats"
 	"github.com/hashicorp/nomad/plugins/drivers"
 )
 
@@ -50,9 +49,9 @@ type taskHandle struct {
 	startedAt      time.Time
 	completedAt    time.Time
 	exitResult     *drivers.ExitResult
-	totalCpuStats  *stats.CpuStats
-	userCpuStats   *stats.CpuStats
-	systemCpuStats *stats.CpuStats
+	totalCpuStats  *cpustats.Tracker
+	userCpuStats   *cpustats.Tracker
+	systemCpuStats *cpustats.Tracker
 	containerName  string
 	container      containerd.Container
 	task           containerd.Task
@@ -102,11 +101,6 @@ func (h *taskHandle) IsRunning(ctxContainerd context.Context) (bool, error) {
 func (h *taskHandle) run(ctxContainerd context.Context) {
 	h.stateLock.Lock()
 	defer h.stateLock.Unlock()
-
-	// Every executor runs this init at creation for stats
-	if err := hstats.Init(); err != nil {
-		h.logger.Error("unable to initialize stats", "error", err)
-	}
 
 	// Sleep for 5 seconds to allow h.task.Wait() to kick in.
 	// TODO: Use goroutine and a channel to synchronize this, instead of sleep.
