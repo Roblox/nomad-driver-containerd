@@ -28,7 +28,7 @@ import (
 	"github.com/hashicorp/consul-template/signals"
 	"github.com/hashicorp/go-hclog"
 	log "github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/nomad/client/stats"
+	"github.com/hashicorp/nomad/client/lib/cpustats"
 	"github.com/hashicorp/nomad/client/taskenv"
 	"github.com/hashicorp/nomad/drivers/shared/eventer"
 	"github.com/hashicorp/nomad/drivers/shared/resolvconf"
@@ -223,6 +223,9 @@ type Driver struct {
 	// nomadConfig is the client config from Nomad
 	nomadConfig *base.ClientDriverConfig
 
+	// compute contains information about the available cpu compute
+	compute cpustats.Compute
+
 	// tasks is the in memory datastore mapping taskIDs to driver handles
 	tasks *taskStore
 
@@ -336,6 +339,7 @@ func (d *Driver) SetConfig(cfg *base.Config) error {
 	// Save the Nomad agent configuration
 	if cfg.AgentConfig != nil {
 		d.nomadConfig = cfg.AgentConfig.Driver
+		d.compute = cfg.AgentConfig.Compute()
 	}
 
 	return nil
@@ -501,9 +505,9 @@ func (d *Driver) StartTask(cfg *drivers.TaskConfig) (*drivers.TaskHandle, *drive
 		procState:      drivers.TaskStateRunning,
 		startedAt:      time.Now().Round(time.Millisecond),
 		logger:         d.logger,
-		totalCpuStats:  stats.NewCpuStats(),
-		userCpuStats:   stats.NewCpuStats(),
-		systemCpuStats: stats.NewCpuStats(),
+		totalCpuStats:  cpustats.New(d.compute),
+		userCpuStats:   cpustats.New(d.compute),
+		systemCpuStats: cpustats.New(d.compute),
 		container:      container,
 		containerName:  containerName,
 		task:           task,
@@ -576,9 +580,9 @@ func (d *Driver) RecoverTask(handle *drivers.TaskHandle) error {
 		startedAt:      taskState.StartedAt,
 		exitResult:     &drivers.ExitResult{},
 		logger:         d.logger,
-		totalCpuStats:  stats.NewCpuStats(),
-		userCpuStats:   stats.NewCpuStats(),
-		systemCpuStats: stats.NewCpuStats(),
+		totalCpuStats:  cpustats.New(d.compute),
+		userCpuStats:   cpustats.New(d.compute),
+		systemCpuStats: cpustats.New(d.compute),
 		container:      container,
 		containerName:  taskState.ContainerName,
 		task:           task,
