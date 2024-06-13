@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -64,7 +63,7 @@ func BuildEtcHosts(hostsFile string) error {
 			return err
 		}
 	}
-	return ioutil.WriteFile(hostsFile, content.Bytes(), 0644)
+	return os.WriteFile(hostsFile, content.Bytes(), 0644)
 }
 
 // CopyEtcHosts copies /etc/hosts to NOMAD_TASK_DIR/etc_hosts
