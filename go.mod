@@ -6,7 +6,7 @@ require (
 	github.com/containerd/cgroups/v3 v3.0.3
 	github.com/containerd/containerd v1.7.14
 	github.com/containerd/typeurl/v2 v2.1.1
-	github.com/docker/docker v25.0.2+incompatible
+	github.com/docker/docker v26.1.4+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/hashicorp/consul-template v0.37.4
 	github.com/hashicorp/go-hclog v1.6.2
@@ -112,6 +112,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/pointerstructure v1.2.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/sys/mount v0.3.3 // indirect
 	github.com/moby/sys/mountinfo v0.7.1 // indirect
