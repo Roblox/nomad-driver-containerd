@@ -123,6 +123,8 @@ To interact with `images` and `containers` directly, you can use [`nerdctl`](htt
 | **extra_hosts** | []string | no | A list of hosts, given as host:IP, to be added to /etc/hosts. |
 | **cap_add** | []string | no | Add individual capabilities. |
 | **cap_drop** | []string | no | Drop invidual capabilities. |
+| **cpuset_cpus** | string | no | CPUs in which to allow execution (0-3, 0,1). |
+| **cpuset_mems** | string | no | MEMs in which to allow execution (0-3, 0,1). |
 | **devices** | []string | no | A list of devices to be exposed to the container. |
 | **auth** | block | no | Provide authentication for a private registry. See [Authentication](#authentication-private-registry) for more details. |
 | **mounts** | []block | no | A list of mounts to be mounted in the container. Volume, bind and tmpfs type mounts are supported. fstab style [`mount options`](https://github.com/containerd/containerd/blob/master/mount/mount_linux.go#L211-L235) are supported. |

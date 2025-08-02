@@ -96,17 +96,19 @@ var (
 	// this is used to validate the configuration specified for the plugin
 	// when a job is submitted.
 	taskConfigSpec = hclspec.NewObject(map[string]*hclspec.Spec{
-		"image":      hclspec.NewAttr("image", "string", true),
-		"command":    hclspec.NewAttr("command", "string", false),
-		"args":       hclspec.NewAttr("args", "list(string)", false),
-		"cap_add":    hclspec.NewAttr("cap_add", "list(string)", false),
-		"cap_drop":   hclspec.NewAttr("cap_drop", "list(string)", false),
-		"cwd":        hclspec.NewAttr("cwd", "string", false),
-		"devices":    hclspec.NewAttr("devices", "list(string)", false),
-		"privileged": hclspec.NewAttr("privileged", "bool", false),
-		"pids_limit": hclspec.NewAttr("pids_limit", "number", false),
-		"pid_mode":   hclspec.NewAttr("pid_mode", "string", false),
-		"hostname":   hclspec.NewAttr("hostname", "string", false),
+		"image":       hclspec.NewAttr("image", "string", true),
+		"command":     hclspec.NewAttr("command", "string", false),
+		"args":        hclspec.NewAttr("args", "list(string)", false),
+		"cap_add":     hclspec.NewAttr("cap_add", "list(string)", false),
+		"cap_drop":    hclspec.NewAttr("cap_drop", "list(string)", false),
+		"cpuset_cpus": hclspec.NewAttr("cpuset_cpus", "string", false),
+		"cpuset_mems": hclspec.NewAttr("cpuset_mems", "string", false),
+		"cwd":         hclspec.NewAttr("cwd", "string", false),
+		"devices":     hclspec.NewAttr("devices", "list(string)", false),
+		"privileged":  hclspec.NewAttr("privileged", "bool", false),
+		"pids_limit":  hclspec.NewAttr("pids_limit", "number", false),
+		"pid_mode":    hclspec.NewAttr("pid_mode", "string", false),
+		"hostname":    hclspec.NewAttr("hostname", "string", false),
 		"host_dns": hclspec.NewDefault(
 			hclspec.NewAttr("host_dns", "bool", false),
 			hclspec.NewLiteral("true"),
@@ -181,6 +183,8 @@ type TaskConfig struct {
 	Args             []string           `codec:"args"`
 	CapAdd           []string           `codec:"cap_add"`
 	CapDrop          []string           `codec:"cap_drop"`
+	CPUSetCPUs       string             `codec:"cpuset_cpus"`
+	CPUSetMEMs       string             `codec:"cpuset_mems"`
 	Cwd              string             `codec:"cwd"`
 	Devices          []string           `codec:"devices"`
 	Seccomp          bool               `codec:"seccomp"`
