@@ -25,6 +25,7 @@ import (
 
 	etchosts "github.com/Roblox/nomad-driver-containerd/etchosts"
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/oci"
@@ -91,6 +92,27 @@ func withResolver(creds CredentialsOpt) containerd.RemoteOpt {
 			remotesdocker.NewDockerAuthorizer(remotesdocker.WithAuthCreds(creds)))),
 	})
 	return containerd.WithResolver(resolver)
+}
+
+func withFileLimit(maxOpenFiles uint64) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, spec *oci.Spec) error {
+		newRlimits := []specs.POSIXRlimit{{
+			Type: "RLIMIT_NOFILE",
+			Hard: maxOpenFiles,
+			Soft: maxOpenFiles,
+		}}
+
+		// Copy existing rlimits excluding previous RLIMIT_NOFILE
+		for _, rlimit := range spec.Process.Rlimits {
+			if rlimit.Type != "RLIMIT_NOFILE" {
+				newRlimits = append(newRlimits, rlimit)
+			}
+		}
+
+		spec.Process.Rlimits = newRlimits
+
+		return nil
+	}
 }
 
 func (d *Driver) pullImage(imageName, imagePullTimeout string, auth *RegistryAuth) (containerd.Image, error) {
@@ -165,6 +187,11 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 		} else {
 			opts = append(opts, oci.WithHostNamespace(specs.PIDNamespace))
 		}
+	}
+
+	// Set the resource limit for open file descriptors
+	if config.FileLimit > 0 {
+		opts = append(opts, withFileLimit(uint64(config.FileLimit)))
 	}
 
 	// Size of /dev/shm

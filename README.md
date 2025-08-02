@@ -112,6 +112,7 @@ To interact with `images` and `containers` directly, you can use [`nerdctl`](htt
 | **privileged** | bool | no | Run container in privileged mode. Your container will have all linux capabilities when running in privileged mode. |
 | **pids_limit** | int64 | no | An integer value that specifies the pid limit for the container. Defaults to unlimited. |
 | **pid_mode** | string | no | `host` or not set (default). Set to `host` to share the PID namespace with the host. |
+| **file_limit** | int64 | no | An integer value that specifies the file descriptor ulimit for the container. Defaults to 1024 by containerd. |
 | **hostname** | string | no | The hostname to assign to the container. When launching more than one of a task (using `count`) with this option set, every container the task starts will have the same hostname. |
 | **host_dns** | bool | no | Default (`true`). By default, a container launched using `containerd-driver` will use host `/etc/resolv.conf`. This is similar to [`docker behavior`](https://docs.docker.com/config/containers/container-networking/#dns-services). However, if you don't want to use host DNS, you can turn off this flag by setting `host_dns=false`. |
 | **seccomp** | bool | no | Enable default seccomp profile. List of [`allowed syscalls`](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go#L51-L395). |
