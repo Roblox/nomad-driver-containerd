@@ -264,8 +264,7 @@ func (d *Driver) createContainer(containerConfig *ContainerConfig, config *TaskC
 
 	// Setup host DNS (/etc/resolv.conf) into the container.
 	if config.HostDNS {
-		dnsMount := buildMountpoint("bind", "/etc/resolv.conf", "/etc/resolv.conf", []string{"rbind", "ro"})
-		mounts = append(mounts, dnsMount)
+		opts = append(opts, oci.WithHostResolvconf)
 	}
 
 	// Setup "/secrets" (NOMAD_SECRETS_DIR) in the container.
