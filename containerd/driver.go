@@ -79,7 +79,7 @@ var (
 			hclspec.NewAttr("enabled", "bool", false),
 			hclspec.NewLiteral("true"),
 		),
-		"containerd_runtime": hclspec.NewAttr("containerd_runtime", "string", true),
+		"containerd_runtime": hclspec.NewAttr("containerd_runtime", "string", false),
 		"stats_interval":     hclspec.NewAttr("stats_interval", "string", false),
 		"allow_privileged": hclspec.NewDefault(
 			hclspec.NewAttr("allow_privileged", "bool", false),
@@ -122,6 +122,7 @@ var (
 		"shm_size":        hclspec.NewAttr("shm_size", "string", false),
 		"sysctl":          hclspec.NewAttr("sysctl", "list(map(string))", false),
 		"readonly_rootfs": hclspec.NewAttr("readonly_rootfs", "bool", false),
+		"runtime":         hclspec.NewAttr("runtime", "string", false),
 		"host_network":    hclspec.NewAttr("host_network", "bool", false),
 		"auth": hclspec.NewBlock("auth", false, hclspec.NewObject(map[string]*hclspec.Spec{
 			"username": hclspec.NewAttr("username", "string", true),
@@ -195,6 +196,7 @@ type TaskConfig struct {
 	ImagePullTimeout string             `codec:"image_pull_timeout"`
 	ExtraHosts       []string           `codec:"extra_hosts"`
 	Entrypoint       []string           `codec:"entrypoint"`
+	Runtime          string             `codec:"runtime"`
 	ReadOnlyRootfs   bool               `codec:"readonly_rootfs"`
 	HostNetwork      bool               `codec:"host_network"`
 	Auth             RegistryAuth       `codec:"auth"`
